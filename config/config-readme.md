@@ -1,0 +1,1 @@
+Config folder is used only for configuration files of "config" library

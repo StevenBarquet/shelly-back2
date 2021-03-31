@@ -1,0 +1,11 @@
+{
+    "name": "shelly_store_backend: Development",
+    "mongoDB": "mongodb://localhost/shelly-store2",
+    "mail": {
+        "name": "mail.shelly-store.com",
+        "host": "mail.shelly-store.com",
+        "port": 465,
+        "user": "seguimiento_pedidos@shelly-store.com"
+    },
+    "notificationMails": "mlmjm123@gmail.com"
+}
