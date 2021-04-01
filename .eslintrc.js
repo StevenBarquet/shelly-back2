@@ -60,9 +60,10 @@ module.exports = {
       }
     ],
     'no-console': 0,
+    'no-use-before-define': ['error', { 'functions': false, 'variables': true }],
     'no-plusplus': 0,
     'import/prefer-default-export': 0,
-    import: 0,
+    'import': 0,
     'import/no-unresolved': 0,
     'import/order': 0,
     'import/no-extraneous-dependencies': 0,

@@ -7,6 +7,8 @@ const debugProd=require('debug')('app:prod')
 // Middlewares
 const helmet = require('helmet');
 const cors = require('cors');
+// Routes
+const productAdminRoutes = require('./routes/productsAdmin')
 // Otros
 const startLogs= require('./configuration/startLogs')
 
@@ -28,7 +30,7 @@ app.use(helmet()); // for security
 app.use(cors()); // for security
 
 // -----------------------------------ROUTES-------------------------------
-// app.use('/laptops/', productRoutes)
+app.use('/admin/productos/', productAdminRoutes)
 // app.use('/ordenes', ordersRoutes)
 
 // -----------------------------------SSL-------------------------------
