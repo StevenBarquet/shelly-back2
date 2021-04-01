@@ -11,7 +11,8 @@
             ]
         },
         "costo": 6000,
-        "precio": 11300,
+        "precioPlaza": 11300,
+        "precioOnline": 12000,
         "disponibles": 1,
         "online": true,
         "nuevo": false,

@@ -13,7 +13,8 @@ const productSchema = new mongoose.Schema({
     extra: [ String ]
   },
   costo: { type: Number, required: true },
-  precio: { type: Number, required: true },
+  precioPlaza: { type: Number, required: true },
+  precioOnline: { type: Number, required: true },
   disponibles: { type: Number, required: true },
   online: { type: Boolean, required: true },
   nuevo: { type: Boolean, required: true },
@@ -38,7 +39,8 @@ function validateProduct(product) {
       extra: Joi.array().optional().items(Joi.string().optional())
     }),
     costo: Joi.number().required(),
-    precio: Joi.number().required(),
+    precioPlaza: Joi.number().required(),
+    precioOnline: Joi.number().required(),
     disponibles: Joi.number().required(),
     online: Joi.boolean().required(),
     nuevo: Joi.boolean().required(),
@@ -62,7 +64,8 @@ function validateProductWithId(product) {
       extra: Joi.array().optional().items(Joi.string().optional())
     }),
     costo: Joi.number().required(),
-    precio: Joi.number().required(),
+    precioPlaza: Joi.number().required(),
+    precioOnline: Joi.number().required(),
     disponibles: Joi.number().required(),
     online: Joi.boolean().required(),
     nuevo: Joi.boolean().required(),

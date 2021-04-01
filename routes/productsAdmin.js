@@ -1,12 +1,13 @@
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
 const express = require('express');
-
-const router = express.Router();
 const debug=require('debug')('app:test')
 // Others
 const { Product, validateProduct, validateProductWithId } = require('../data-modell/product');
+const { validatePagination, validateSearch } = require('../data-modell/otherValidators')
 const wrapDBservice = require('./wrapDBservice');
+
+const router = express.Router();
 
 // ---------------------------------------------------ROUTES---------------------------------------------
 // ------Create One------------
@@ -25,7 +26,7 @@ router.post('/registrar', (req, res)=>{
 })
 
 // ------Read All ------------
-router.get('/todos', (req, res)=>{
+router.get('/all', (req, res)=>{
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getAllProducts);
 })
@@ -69,8 +70,33 @@ router.delete('/borrar/:id', (req, res)=>{
   wrapDBservice(res, deleteOneProduct, itemId);
 })
 
-// ------Get products count------------
 // ------Get all paginated------------
+router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validatePagination(req.params)
+  if(validateBody.error){
+    res.status(400).send(validateBody.error)
+    return;
+  }
+
+  // res.send({ status: 'success', data:  req.params })
+  wrapDBservice(res, getAllProductsPaginated, req.params);
+})
+
+// ------Get products count------------
+router.post('/buscar', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateSearch(req.body)
+  if(validateBody.error){
+    res.status(400).send(validateBody.error)
+    return;
+  }
+
+  // res.send({ status: 'success', data:  req.params })
+  wrapDBservice(res, searchProducts, req.body);
+})
 
 // -------------------------------------------------QUERYS-----------------------------------------
 
@@ -101,6 +127,77 @@ async function getAllProducts() {
     return {
       internalError: false,
       result: products
+    };
+  } catch (error) {
+    debug('------getAllProducts-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 500 }
+    }
+  }
+}
+
+async function getAllProductsPaginated(params) {
+  // Trae todos los productos de la base de datos paginado
+  const { pageNumber, pageSize } = params;
+  const pageNumberInt = parseInt(pageNumber);
+  const pageSizeInt = parseInt(pageSize);
+  try {
+    const products = await Product
+      .find()
+      .sort({ nombre: 1 })
+      .skip((pageNumberInt-1) *  pageSizeInt)
+      .limit(pageSizeInt)
+    ;
+    const productCount = await Product.find().count();
+
+    debug('------getAllProducts-----\nsuccess\n', products);
+    return {
+      internalError: false,
+      result: { productCount, products }
+    };
+  } catch (error) {
+    debug('------getAllProducts-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 500 }
+    }
+  }
+}
+
+async function searchProducts(data) {
+  // Trae todos los productos que coincidan con los criterios de busqueda
+  const { pageNumber, pageSize, searchedValue, filters } = data;
+  const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
+  let products; let productCount;
+
+  try {
+    if(searchedValue){
+      products = await Product
+        .find(filters)
+        .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
+        .skip((pageNumber-1) *  pageSize)
+        .limit(pageSize);
+
+      productCount = await Product
+        .find(filters)
+        .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
+        .count();
+    } else{
+      products = await Product
+        .find(filters)
+        .skip((pageNumber-1) *  pageSize)
+        .limit(pageSize);
+
+      productCount = await Product
+        .find(filters)
+        .count();
+    }
+
+    debug('------getAllProducts-----\nsuccess\n', products);
+    return {
+      internalError: false,
+      result: { productCount, products }
     };
   } catch (error) {
     debug('------getAllProducts-----\nInternal error\n\n', error);
@@ -182,7 +279,7 @@ async function deleteOneProduct(id) {
       debug('------deleteOneProduct----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error, statusError: 401 }
       }
     }
   } catch (error) {

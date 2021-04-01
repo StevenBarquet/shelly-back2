@@ -9,6 +9,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 // Routes
 const productAdminRoutes = require('./routes/productsAdmin')
+const productClientRoutes = require('./routes/productsClient')
 // Otros
 const startLogs= require('./configuration/startLogs')
 
@@ -31,7 +32,7 @@ app.use(cors()); // for security
 
 // -----------------------------------ROUTES-------------------------------
 app.use('/admin/productos/', productAdminRoutes)
-// app.use('/ordenes', ordersRoutes)
+app.use('/client/productos/', productClientRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');
