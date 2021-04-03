@@ -19,5 +19,8 @@
         "descripcion": "Opcional / -Intel® 8265 802.11AC (2 x 2) & Bluetooth® 4.1 \n-10.7 hours battery life\n-Display 14.0\" FHD (1920 x 1080) IPS, anti-glare, 250 nits\n-Camera 720p HD",
         "estetica": "8.5/10 (opcional)",
         "categoria":"Laptops",
-        "subcategoria":"Opcional"
+        "subcategoria":"Opcional",
+        "countVisits": 0,
+        "countQuestions": 0,
+        "countPurchases": 0
     }

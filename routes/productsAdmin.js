@@ -167,30 +167,35 @@ async function getAllProductsPaginated(params) {
 
 async function searchProducts(data) {
   // Trae todos los productos que coincidan con los criterios de busqueda
-  const { pageNumber, pageSize, searchedValue, filters } = data;
+  const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
   const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
+  const sortOrder = sortBy || { nombre: 1 }
   let products; let productCount;
 
   try {
     if(searchedValue){
       products = await Product
         .find(filters)
+        .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
         .skip((pageNumber-1) *  pageSize)
         .limit(pageSize);
 
       productCount = await Product
         .find(filters)
+        .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
         .count();
     } else{
       products = await Product
         .find(filters)
+        .sort(sortOrder)
         .skip((pageNumber-1) *  pageSize)
         .limit(pageSize);
 
       productCount = await Product
         .find(filters)
+        .sort(sortOrder)
         .count();
     }
 

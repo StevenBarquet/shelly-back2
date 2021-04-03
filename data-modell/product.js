@@ -22,6 +22,9 @@ const productSchema = new mongoose.Schema({
   estetica: String,
   categoria:{ type: String, required: true },
   subcategoria: String,
+  countVisits: Number,
+  countQuestions: Number,
+  countPurchases: Number,
   date: { type: Date, default: Date.now }
 });
 

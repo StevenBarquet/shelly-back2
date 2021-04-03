@@ -23,6 +23,11 @@ function validateSearch(searchObj) {
       online: Joi.boolean().optional(),
       nuevo: Joi.boolean().optional(),
       categoria: Joi.string().optional()
+    }).optional(),
+    sortBy: Joi.object({
+      marca: Joi.number().optional(),
+      nombre: Joi.number().optional(),
+      precioOnline: Joi.number().optional()
     }).optional()
   })
 
