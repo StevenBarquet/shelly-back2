@@ -17,6 +17,7 @@ const homeSchema = new mongoose.Schema({
     porductID: { type: String, required: true },
     sortIndex: { type: Number, required: true }
   }],
+  sortIndex: { type: Number, required: true },
   paragraph: { type: String, required: true },
   notice: { type: String, required: true },
   date: { type: Date, default: Date.now }
@@ -34,7 +35,8 @@ function validateHome(home) {
         imgMovil: Joi.string().min(3).required(),
         text: Joi.string().optional(),
         textColor: Joi.string(),
-        link: Joi.string().optional()
+        link: Joi.string().optional(),
+        visible: Joi.boolean().required()
       })
     ),
     products: Joi.array().items(
@@ -43,6 +45,7 @@ function validateHome(home) {
         sortIndex: Joi.number().required()
       })
     ),
+    sortIndex: Joi.number().required(),
     paragraph: Joi.string().min(3).required(),
     notice: Joi.string().min(3).max(100)
   })
@@ -69,6 +72,7 @@ function validateHomeWithID(home) {
         sortIndex: Joi.number().required()
       })
     ),
+    sortIndex: Joi.number().required(),
     paragraph: Joi.string().min(3).required(),
     notice: Joi.string().min(3).max(100)
   })

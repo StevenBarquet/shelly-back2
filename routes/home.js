@@ -7,53 +7,64 @@ const { Home, validateHome, validateHomeWithID } = require('../data-modell/home'
 const wrapDBservice = require('./wrapDBservice');
 
 const router = express.Router();
+const mockHome = {
+  banners: [{
+    imgDesk: 'https://png.pngtree.com/thumb_back/fw800/back_our/20190620/ourmid/pngtree-business-desktop-banner-image_167746.jpg',
+    imgMovil: 'https://blog.creatopy.com/wp-content/uploads/2019/05/Standard-Banner-Sizes-2.png',
+    text: 'Some text for testing purpuses',
+    textColor: 'DarkBlue',
+    link: 'https://github.com/StevenBarquet',
+    visible: true
+  }],
+  products: [{
+    porductID: '6065e76bd0f99d179a5b6fe7',
+    sortIndex: 0
+  }, {
+    porductID: '606618015f6dca2c8fdbffc2',
+    sortIndex: 1
+  }],
+  sortIndex: 0,
+  paragraph: "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum",
+  notice: 'Envíos gratis desde $1999'
+}
 
 // ---------------------------------------------------ROUTES---------------------------------------------
 // ------initializate------------
 router.post('/initializate', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  // debug('\n----muere aquí-----\n')
-
-  const validateBody = validateHome(req.body)
+  const validateBody = validateHome(mockHome)
   if(validateBody.error){
     res.status(400).send(validateBody.error)
     return;
   }
 
-  wrapDBservice(res, startHome, req.body);
+  wrapDBservice(res, startHome, mockHome);
 })
 
 // ------Read All ------------
 router.get('/all', (req, res)=>{
   debug('requested for: ', req.originalUrl)
-  wrapDBservice(res, getAllProducts);
+  wrapDBservice(res, getAllHome);
 })
 
-// ----- Read One -------
-router.get('/:id', (req, res)=>{
+// ------Read Home index 0 ------------
+router.get('/getHome', (req, res)=>{
   debug('requested for: ', req.originalUrl)
-
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for search' })
-    return;
-  }
-
-  wrapDBservice(res, getOneProduct, itemId);
+  wrapDBservice(res, getHome);
 })
 
 // ------Update One------------
 router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const validateBody = validateProductWithId(req.body)
+  const validateBody = validateHomeWithID(req.body)
   if(validateBody.error){
     res.status(400).send(validateBody.error)
     return;
   }
 
-  wrapDBservice(res, updateOneProduct, req.body);
+  wrapDBservice(res, updateHome, req.body);
 })
 
 // ------Delete One------------
@@ -66,41 +77,12 @@ router.delete('/borrar/:id', (req, res)=>{
     return;
   }
 
-  wrapDBservice(res, deleteOneProduct, itemId);
+  wrapDBservice(res, deleteOneHome, itemId);
 })
-
-// ------Get all paginated------------
-router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
-  debug('requested for: ', req.originalUrl)
-
-  const validateBody = validatePagination(req.params)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
-
-  // res.send({ status: 'success', data:  req.params })
-  wrapDBservice(res, getAllProductsPaginated, req.params);
-})
-
-// ------Get products count------------
-router.post('/buscar', (req, res)=>{
-  debug('requested for: ', req.originalUrl)
-
-  const validateBody = validateSearch(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
-
-  // res.send({ status: 'success', data:  req.params })
-  wrapDBservice(res, searchProducts, req.body);
-})
-
 // -------------------------------------------------QUERYS-----------------------------------------
 
 async function startHome(data) {
-// Crea un nuevo producto en la base de datos
+// Crea un nuevo Home en la base de datos
   const course = new Home({ ...data });
   try {
     const result = await  course.save();
@@ -121,14 +103,14 @@ async function startHome(data) {
 async function getAllHome() {
 // Trae todos los productos de la base de datos
   try {
-    const products = await Home.find();
-    debug('------getAllProducts-----\nsuccess\n', products);
+    const products = await Home.find().sort({ sortIndex: 1 });
+    debug('------getAllHome-----\nsuccess\n', products);
     return {
       internalError: false,
       result: products
     };
   } catch (error) {
-    debug('------getAllProducts-----\nInternal error\n\n', error);
+    debug('------getAllHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 500 }
@@ -136,27 +118,28 @@ async function getAllHome() {
   }
 }
 
-async function getAllProductsPaginated(params) {
-  // Trae todos los productos de la base de datos paginado
-  const { pageNumber, pageSize } = params;
-  const pageNumberInt = parseInt(pageNumber);
-  const pageSizeInt = parseInt(pageSize);
+async function getHome() {
+  // Trae todos los productos de la base de datos
   try {
-    const products = await Product
-      .find()
-      .sort({ nombre: 1 })
-      .skip((pageNumberInt-1) *  pageSizeInt)
-      .limit(pageSizeInt)
-    ;
-    const productCount = await Product.find().count();
+    const products = await Home
+      .find().
+      sort({ sortIndex: 1 });
 
-    debug('------getAllProducts-----\nsuccess\n', products);
-    return {
-      internalError: false,
-      result: { productCount, products }
-    };
+    try {
+      debug('------getAllHome-----\nsuccess\n', products);
+      return {
+        internalError: false,
+        result: products[0]
+      };
+    } catch (error) {
+      debug('------getAllHome-----\nInternal error\n\n', error);
+      return {
+        internalError: true,
+        result: { ...error, statusError: 500 }
+      }
+    }
   } catch (error) {
-    debug('------getAllProducts-----\nInternal error\n\n', error);
+    debug('------getAllHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 500 }
@@ -164,92 +147,25 @@ async function getAllProductsPaginated(params) {
   }
 }
 
-async function searchProducts(data) {
-  // Trae todos los productos que coincidan con los criterios de busqueda
-  const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
-  const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
-  const sortOrder = sortBy || { nombre: 1 }
-  let products; let productCount;
-
-  try {
-    if(searchedValue){
-      products = await Product
-        .find(filters)
-        .sort(sortOrder)
-        .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
-        .skip((pageNumber-1) *  pageSize)
-        .limit(pageSize);
-
-      productCount = await Product
-        .find(filters)
-        .sort(sortOrder)
-        .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
-        .count();
-    } else{
-      products = await Product
-        .find(filters)
-        .sort(sortOrder)
-        .skip((pageNumber-1) *  pageSize)
-        .limit(pageSize);
-
-      productCount = await Product
-        .find(filters)
-        .sort(sortOrder)
-        .count();
-    }
-
-    debug('------getAllProducts-----\nsuccess\n', products);
-    return {
-      internalError: false,
-      result: { productCount, products }
-    };
-  } catch (error) {
-    debug('------getAllProducts-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, statusError: 500 }
-    }
-  }
-}
-
-async function getOneProduct(id) {
-// Trae un producto de la base de datos
-  try {
-    const someProduct = await Product.findById(id)
-    debug('------getOneProduct-----\nsuccess\n', someProduct);
-    return {
-      internalError: false,
-      result: someProduct
-    }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
-    debug('------getOneProduct-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, statusError: 404 }
-    };
-  }
-}
-
-async function updateOneProduct(data) {
+async function updateHome(data) {
 // Actualiza un producto en la base de datos si existe
   try {
     // verifica que exista el producto
-    const someProduct = await Product.findById(data._id)
+    const someHome = await Home.findById(data._id)
     try {
       // si existe intenta hacer update del producto
-      someProduct.set({
+      someHome.set({
         ...data
       })
-      const result = await someProduct.save();
-      debug('------updateOneProduct-----\nsuccess\n', result);
+      const result = await someHome.save();
+      debug('------updateHome-----\nsuccess\n', result);
       return {
         internalError: false,
         result: { status: 'success' }
       };
     } catch (error) {
       // retorna error si no pudiste hacer update
-      debug('------updateOneProduct----\nInternal error\n\n', error);
+      debug('------updateHome----\nInternal error\n\n', error);
       return {
         internalError: true,
         result: { ...error, statusError: 500 }
@@ -257,7 +173,7 @@ async function updateOneProduct(data) {
     }
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no valido
-    debug('------updateOneProduct-----\nInternal error\n\n', error);
+    debug('------updateHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 404 }
@@ -265,22 +181,22 @@ async function updateOneProduct(data) {
 
   }
 }
-async function deleteOneProduct(id) {
+async function deleteOneHome(id) {
 // Elimina un producto en la base de datos si existe
   try {
     // verifica que exista el producto
-    await Product.findById(id);
+    await Home.findById(id);
     try {
       // si existe intenta hacer el DELETE
-      const result = await Product.deleteOne({ _id: id })
-      debug('------deleteOneProduct-----\nsuccess\n', result);
+      const result = await Home.deleteOne({ _id: id })
+      debug('------deleteOneHome-----\nsuccess\n', result);
       return {
         internalError: false,
         result: { status: 'success' }
       }
     } catch (error) {
       // retorna error si no pudiste hacer DELETE
-      debug('------deleteOneProduct----\nInternal error\n\n', error);
+      debug('------deleteOneHome----\nInternal error\n\n', error);
       return {
         internalError: true,
         result: { ...error, statusError: 401 }
@@ -288,7 +204,7 @@ async function deleteOneProduct(id) {
     }
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no encontrado
-    debug('------deleteOneProduct-----\nInternal error\n\n', error);
+    debug('------deleteOneHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 404 }

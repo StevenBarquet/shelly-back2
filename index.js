@@ -10,6 +10,7 @@ const cors = require('cors');
 // Routes
 const productAdminRoutes = require('./routes/productsAdmin')
 const productClientRoutes = require('./routes/productsClient')
+const homeServicesRoutes = require('./routes/home')
 // Otros
 const startLogs= require('./configuration/startLogs')
 
@@ -33,6 +34,7 @@ app.use(cors()); // for security
 // -----------------------------------ROUTES-------------------------------
 app.use('/admin/productos/', productAdminRoutes)
 app.use('/client/productos/', productClientRoutes)
+app.use('/homeServices/', homeServicesRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');
