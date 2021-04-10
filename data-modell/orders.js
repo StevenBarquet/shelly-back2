@@ -21,18 +21,18 @@ const orderSchema = new mongoose.Schema({
     entreC2: String,
     referencia: String,
     domType: String,
-    num: String
+    num: String,
+    numAlterno: String
   },
   // Products Data (optional)
   items : [{
-    marca: String,
-    modelo: String,
+    categoria: String,
+    nombre: String,
     piezas: Number,
     disponibles: Number,
     images: {
       cover: String,
-      mini: String,
-      extra: [ String ]
+      mini: String
     },
     _id : String,
     costo: Number,
@@ -52,7 +52,8 @@ const orderSchema = new mongoose.Schema({
   },
   // Purchase Data (optional)
   ventaTipo: { type: String, required: true }, // local 133, fb, página, etc
-  responsableVenta: { type: String, required: true },
+  responsableVenta: { type: String, required: true }, // empleado, gerente o cliente
+  metodoPago: String,
   notaVenta: String,
   estatus: { type: String, required: true },
   totalVenta: { type: Number, required: true },
@@ -63,37 +64,69 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model('Order', orderSchema)
 
 // ------------------------------------------------MODEL DATA VALIDATORS------------------------------------------
-// Hacer validators para, venta local, preventa, venta online
-function validateOrder(order) {
+
+function validateOrderLocal(order) {
   const schema = Joi.object({
-    envioTipo: Joi.string().min(3).required(),
-    pagoTipo: Joi.string().min(3).required(),
-    correo: Joi.string().min(3).email().required(),
-    nombre: Joi.string().min(3).required(),
-    apellido: Joi.string().min(3).required(),
-    estatus: Joi.string().min(3).required(),
-    telefono: Joi.string().empty(''),
-    collection_id: Joi.string().empty(''),
-    items : Joi.array().items(Joi.object({
-      piezas: Joi.number().integer().required(),
-      _id : Joi.string().required()
-    }).required()
-    ),
+    // Client Data (optional)
+    correo: Joi.string(),
+    nombre: Joi.string(),
+    apellido: Joi.string(),
+    telefono: Joi.string(),
     domicilio: Joi.object({
-      nombre: Joi.string().empty(''),
-      cp: Joi.string().empty(''),
-      estado: Joi.string().empty(''),
-      municipio: Joi.string().empty(''),
-      colonia: Joi.string().empty(''),
-      calle: Joi.string().empty(''),
-      exterior: Joi.string().empty(''),
-      interior: Joi.string().empty(''),
-      entreC1: Joi.string().empty(''),
-      entreC2: Joi.string().empty(''),
-      referencia: Joi.string().empty(''),
-      domType: Joi.string().empty(''),
-      num: Joi.string().empty('')
-    })
+      nombre: Joi.string(),
+      cp: Joi.string(),
+      estado: Joi.string(),
+      municipio: Joi.string(),
+      colonia: Joi.string(),
+      calle: Joi.string(),
+      exterior: Joi.string(),
+      interior: Joi.string(),
+      entreC1: Joi.string(),
+      entreC2: Joi.string(),
+      referencia: Joi.string(),
+      domType: Joi.string(),
+      num: Joi.string(),
+      numAlterno: Joi.string()
+    }),
+    // Products Data (optional)
+    items : Joi.array().items(
+      Joi.object({
+        categoria: Joi.string(),
+        nombre: Joi.string(),
+        piezas: Joi.number().integer(),
+        disponibles: Joi.number().integer().required(),
+        images: Joi.object({
+          cover: Joi.string(),
+          mini: Joi.string()
+        }),
+        _id : Joi.string().required(),
+        costo: Joi.number().required(),
+        precio: Joi.number().required()
+      })).required(),
+    cobroAdicional: Joi.object({
+      concepto: Joi.string(),
+      cantidad: Joi.number()
+    }),
+    // Shipping Data
+    envio: Joi.object({
+      tipo: Joi.string(),
+      responsable: Joi.string(),
+      costo: Joi.number(),
+      nota: Joi.string(),
+      guia: Joi.array().items(
+        Joi.object({
+          link: Joi.string(),
+          codigo: Joi.string()
+        }))
+    }),
+    // Purchase Data (optional)
+    ventaTipo: Joi.string().required(),
+    responsableVenta: Joi.string().required(),
+    metodoPago: Joi.string().required(),
+    notaVenta: Joi.string(),
+    estatus: Joi.string().required(),
+    totalVenta: Joi.number().required(),
+    totalCosto: Joi.number().required()
   })
 
   return schema.validate(order)
@@ -158,6 +191,6 @@ function validateOrderWithId(order) {
 }
 
 exports.Order = Order ;
-exports.validateOrder = validateOrder;
+exports.validateOrderLocal = validateOrderLocal;
 exports.validateOrderWithId = validateOrderWithId;
 exports.validateProducts = validateProducts;
