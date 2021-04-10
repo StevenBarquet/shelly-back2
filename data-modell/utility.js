@@ -1,4 +1,4 @@
-const Joi = require('@hapi/joi'); // Joi is a class so uppercase
+const Joi = require('joi'); // Joi is a class so uppercase
 const mongoose = require('mongoose');
 
 // ------------------------------------------------MODEL DATA BASE------------------------------------------

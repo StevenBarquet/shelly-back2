@@ -11,6 +11,7 @@ const cors = require('cors');
 const productAdminRoutes = require('./routes/productsAdmin')
 const productClientRoutes = require('./routes/productsClient')
 const homeServicesRoutes = require('./routes/home')
+const orderRoutes = require('./routes/orders')
 // Otros
 const startLogs= require('./configuration/startLogs')
 
@@ -35,6 +36,7 @@ app.use(cors()); // for security
 app.use('/admin/productos/', productAdminRoutes)
 app.use('/client/productos/', productClientRoutes)
 app.use('/homeServices/', homeServicesRoutes)
+app.use('/ordenes/', orderRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');

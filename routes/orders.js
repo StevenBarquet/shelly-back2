@@ -3,9 +3,10 @@
 const express = require('express');
 const debug=require('debug')('app:test')
 // Others
-// const { Order, validateOrderLocal } = require('../data-modell/orders');
-const { Product, validateOrderLocal } = require('../data-modell/product');
-// const wrapDBService = require('../other-tools/wrapDBService');
+const { Order, validateOrderLocal } = require('../data-modell/orders');
+const { Utility } = require('../data-modell/utility');
+const { Product } = require('../data-modell/product');
+const wrapDBservice = require('./wrapDBservice');
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
@@ -14,7 +15,7 @@ const router = express.Router();
 
 // ---------------------------------------------------ROUTES---------------------------------------------
 // ------Create One------------
-router.post('/ventaLocal', (req, res)=>{
+router.post('/ventaLocal', async (req, res)=>{
   debug('requested from: ', req.url)
 
   const { error } = validateOrderLocal(req.body)
@@ -24,31 +25,99 @@ router.post('/ventaLocal', (req, res)=>{
     return;
   }
 
-  validateProductsDB(req.body.items);
+  const { internalError, result } = await validateProductsDB(req.body);
+  if(internalError){
+    debug('Error: ', result.errorType)
+    res.status(400).send({ internalError, result })
+  } else{
+    // Si la lista de productos de la orden es válida
+    const { dbProducts, utility } = result;
+    wrapDBservice(res, createLocalOrder, { ...req.body, dbProducts, utility });
+  }
 
-  // wrapDBService(res, createOrder, req.body);
 })
 
-// router.post('/verifyProducts', (req, res)=>{
-//   debug('requested from: ', req.url)
+router.post('/verifyProducts', (req, res)=>{
+  debug('requested from: ', req.url)
 
-//   const { error } = validateProducts(req.body)
-//   if(error){
-//     debug('Error de Joi')
-//     res.status(400).send({ messageError: error.details[0].message })
-//     return;
-//   }
+  const { error } = validateOrderLocal(req.body)
+  if(error){
+    debug('Error de Joi')
+    res.status(400).send({ messageError: error.details[0].message })
+    return;
+  }
 
-//   wrapDBService(res, searchProducts, req.body);
-// })
+  wrapDBservice(res, validateProductsDB, req.body);
+})
 
-// -------------------------------------------------METHODS-----------------------------------------
-function validateProductsDB(products) {
-  const dbProducts= searchProducts(products);
-  piezasVSdisponibles(products, dbProducts);
+// ----------------------------------------------MAIN METHODS---------------------------------------
+async function createLocalOrder(data){
+  // Crea una orden local, registra su utilidad y elimina inventario de los productos vendidos
+  const { utility, dbProducts, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
+  const { totalVenta, totalCosto, utilidad } = utility
+  const orderData = { items: dbProducts, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
+
+  const newOrder = await createAnyOrder(orderData)
+
+  if(newOrder.internalError){
+    debug('------createLocalOrder-----\nError al crear orden\n\n', newOrder.result);
+    return newOrder
+  }
+
+  const utilityData = { idOrden: newOrder.result.data._id, utilidad }
+  const utilityDBresponse = await createAnyUtility(utilityData)
+  if(utilityDBresponse.internalError){
+    debug('------createLocalOrder-----\nError al registrar utilidad\n\n', newOrder.result);
+    return utilityDBresponse
+  }
+
+  // remove from inventrary function
+
+  debug('------createLocalOrder-----\nsuccess\n');
+  return {
+    internalError: false,
+    result: {
+      status: 'success'
+      // data: newOrder
+    }
+  };
 }
 
+async function validateProductsDB(data) {
+  // Valida si la lista de productos existen, son válidos en la db y los costos y precios coincidan
+  const products = data.items
+
+  const dbProducts= await searchProducts(products);
+  if(dbProducts.length === 0 || dbProducts.length !== products.length)
+    return(
+      { internalError: true,
+        result: { errorType: 'Productos no encontrados', productosValidos: dbProducts || [] }
+      })
+
+  const piezas= piezasVSdisponibles(products, dbProducts);
+  if(piezas.length !== 0)
+    return(
+      { internalError: true,
+        result: { errorType: 'Productos con piezas no disponibles', productosError: piezas }
+      })
+
+  const { sumaMatch, utility } = localOrderUtilityCalculator({ ...data, dbProducts });
+  if(!sumaMatch)
+    return(
+      { internalError: true,
+        result: { errorType: 'El precio o costo de los productos no coincide con DB', productosValidos: dbProducts }
+      })
+
+  return (
+    {
+      internalError: false,
+      result: { dbProducts, utility }
+    }
+  )
+}
+// -------------------------------------------------METHODS-----------------------------------------
 async function searchProducts(items) {
+  // valida que un array de productos coincida en DB y retorna la lista desde la DB
   const itemsIDs = items.map(item => item._id);
   try {
     // Verifica que existan los productos de la orden
@@ -60,7 +129,7 @@ async function searchProducts(items) {
         categoria: 1,
         disponibles: 1,
         costo: 1,
-        precio: 1,
+        precioPlaza: 1,
         'images.cover': 1,
         'images.mini': 1
       })
@@ -72,10 +141,79 @@ async function searchProducts(items) {
 }
 
 function piezasVSdisponibles(itemsPiezas, itemsDisponibles) {
+  // retorna [] si todos las piezas de la lista de producto se encuentran disponibles en inventario
+  // si no retorna la lista de productos que sobrepasan el inventario
+  const greaterThan = itemsPiezas.filter((element, index) => itemsDisponibles[index].disponibles < element.piezas);
 
-  const greaterThan = itemsDisponibles.filter((element, index) => itemsPiezas[index].piezas < element.disponibles);
+  return greaterThan
+}
 
-  console.log('----->', greaterThan)
+function localOrderUtilityCalculator(data){
+  // Calcula la utilidad, costos y venta, además valida que los precios y costos coincidan en DB
+  const {
+    dbProducts,
+    cobroAdicional,
+    totalVenta,
+    totalCosto
+  } = data
+
+  const productsCost = dbProducts.reduce((pila, product) => pila + product.costo, 0);
+  const productsPrice = dbProducts.reduce((pila, product) => pila + product.precioPlaza, 0);
+  const venta = cobroAdicional ? productsPrice + cobroAdicional.cantidad : productsPrice;
+  const costo = productsCost
+
+  if(totalVenta === venta && totalCosto === costo){
+    return     {
+      sumaMatch: true,
+      utility: {
+        totalVenta: venta,
+        totalCosto: costo,
+        utilidad: venta - costo
+      }
+    }
+  }
+  return     {
+    sumaMatch: false
+  }
+
+}
+
+async function createAnyOrder(data){
+  // Crea una nueva orden en db
+  const orden = new Order(data);
+  try {
+    const newOrder = await  orden.save();
+    debug('------createAnyOrder-----\nsuccess\n', newOrder);
+    return {
+      internalError: false,
+      result: { status: 'success', data: newOrder }
+    }
+  } catch (error) {
+    debug('------createAnyOrder-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 401 }
+    }
+  }
+}
+
+async function createAnyUtility(data){
+  // registra nueva utilidad en db
+  const utilidad = new Utility(data);
+  try {
+    const newUtility = await  utilidad.save();
+    debug('------createAnyUtility-----\nsuccess\n', newUtility);
+    return {
+      internalError: false,
+      result: { status: 'success', data: newUtility }
+    }
+  } catch (error) {
+    debug('------createAnyUtility-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 401 }
+    }
+  }
 }
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const Joi = require('@hapi/joi'); // Joi is a class so uppercase
+const Joi = require('joi'); // Joi is a class so uppercase
 const mongoose = require('mongoose');
 
 // ------------------------------------------------MODEL DATA BASE------------------------------------------
@@ -129,7 +129,7 @@ function validateOrderLocal(order) {
     totalCosto: Joi.number().required()
   })
 
-  return schema.validate(order)
+  return schema.validate(order, { abortEarly: false })
 }
 
 function validateProducts(order) {

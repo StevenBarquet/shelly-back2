@@ -1,0 +1,5 @@
+Registrar venta:
+	-Recibe array de articulos, datos de cliente y domicilio (opcionales), cobro adicional (opcional), venta tipo local 133, responsableVenta, nota, metodo de pago, estatus (pagado), fecha, total cobrado, total costo
+	-Validar existencia y unidades de la lista de productos (hacer un servicio y funcion sólo para ésto)
+	-registrar orden, utilidad y descontar inventario (hacer funcion descontadora de inventario)
+	-Restar vendidos de inventario: traer lista completa, iterar y restar piezas, hacer multiUpdate en productos para guardar productos con su nueva cantidad de disponibles

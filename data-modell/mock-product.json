@@ -1,6 +1,6 @@
 [    
     {
-        "tipo---------->": "No valido en DB",
+        "tipo---------->": "VentaLocal: No valido en DB",
         "correo": "String",
         "nombre": "String",
         "apellido": "String",
@@ -14,7 +14,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "String",
+            "_id": "String",
             "costo": 121,
             "precio": 200
         },{
@@ -26,7 +26,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "String",
+            "_id": "String",
             "costo": 121,
             "precio": 200
         }],
@@ -43,7 +43,7 @@
         "totalCosto": 1232
     },
     {
-        "tipo---------->": "Semi valido en DB",
+        "tipo---------->": "VentaLocal: Semi valido en DB",
         "correo": "String",
         "nombre": "String",
         "apellido": "String",
@@ -57,7 +57,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "6065e76bd0f99d179a5b6fe7",
+            "_id": "6065e76bd0f99d179a5b6fe7",
             "costo": 121,
             "precio": 200
         },{
@@ -69,7 +69,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "String",
+            "_id": "String",
             "costo": 121,
             "precio": 200
         }],
@@ -86,7 +86,7 @@
         "totalCosto": 1232
     },
     {
-        "tipo---------->": "Valido en DB invalido en piezas",
+        "tipo---------->": "VentaLocal: Valido en DB invalido en piezas",
         "correo": "String",
         "nombre": "String",
         "apellido": "String",
@@ -100,7 +100,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "6065e76bd0f99d179a5b6fe7",
+            "_id": "6065e76bd0f99d179a5b6fe7",
             "costo": 121,
             "precio": 200
         },{
@@ -112,7 +112,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "606618015f6dca2c8fdbffc2",
+            "_id": "606618015f6dca2c8fdbffc2",
             "costo": 121,
             "precio": 200
         }],
@@ -129,7 +129,7 @@
         "totalCosto": 1232
     },
     {
-        "tipo---------->": "Valido",
+        "tipo---------->": "VentaLocal: Valido",
         "correo": "String",
         "nombre": "String",
         "apellido": "String",
@@ -143,7 +143,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "6065e76bd0f99d179a5b6fe7",
+            "_id": "6065e76bd0f99d179a5b6fe7",
             "costo": 121,
             "precio": 200
         },{
@@ -155,7 +155,7 @@
             "cover": "String",
             "mini": "String"
             },
-            "_id ": "606618015f6dca2c8fdbffc2",
+            "_id": "606618015f6dca2c8fdbffc2",
             "costo": 121,
             "precio": 200
         }],
