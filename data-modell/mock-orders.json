@@ -1,0 +1,26 @@
+    {
+        "marca": "Opcional",
+        "nombre": "T480",
+        "images": {
+            "cover": "https://www.lenovo.com/medias/lenovo-laptop-thinkpad-t480-feature-03.jpg?context=bWFzdGVyfHJvb3R8NDk0OTN8aW1hZ2UvanBlZ3xoNDkvaDJiLzk2MTA3MDg3NzkwMzguanBnfDE5NzE4YzViY2MzMzYwMTExNmIwOTIxMjExYzYzMzViYjExNzlkMDk2N2ZhNGQ3ZjlkYjE1NzBlNTJhNzQyYmI&w=1920",
+            "mini": "Opcional",
+            "extra": [
+                "Opcional",
+                "Opcional",
+                "Opcional"
+            ]
+        },
+        "costo": 6000,
+        "precioPlaza": 11300,
+        "precioOnline": 12000,
+        "disponibles": 1,
+        "online": true,
+        "nuevo": false,
+        "descripcion": "Opcional / -Intel® 8265 802.11AC (2 x 2) & Bluetooth® 4.1 \n-10.7 hours battery life\n-Display 14.0\" FHD (1920 x 1080) IPS, anti-glare, 250 nits\n-Camera 720p HD",
+        "estetica": "8.5/10 (opcional)",
+        "categoria":"Laptops",
+        "subcategoria":"Opcional",
+        "countVisits": 0,
+        "countQuestions": 0,
+        "countPurchases": 0
+    }
