@@ -443,7 +443,6 @@ function localOrderUtilityCalculator(data){
   return     {
     sumaMatch: false
   }
-
 }
 
 async function createAnyOrder(data){
