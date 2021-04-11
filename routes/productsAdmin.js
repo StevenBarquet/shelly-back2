@@ -84,7 +84,7 @@ router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
   wrapDBservice(res, getAllProductsPaginated, req.params);
 })
 
-// ------Get products count------------
+// ------Get products search------------
 router.post('/buscar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
@@ -266,6 +266,7 @@ async function updateOneProduct(data) {
 
   }
 }
+
 async function deleteOneProduct(id) {
 // Elimina un producto en la base de datos si existe
   try {

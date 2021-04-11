@@ -132,6 +132,75 @@ function validateOrderLocal(order) {
   return schema.validate(order, { abortEarly: false })
 }
 
+function validateOrderLocalWithId(order) {
+  const schema = Joi.object({
+    // Client Data (optional)
+    _id: Joi.string().min(3).required(),
+    correo: Joi.string(),
+    nombre: Joi.string(),
+    apellido: Joi.string(),
+    telefono: Joi.string(),
+    domicilio: Joi.object({
+      nombre: Joi.string(),
+      cp: Joi.string(),
+      estado: Joi.string(),
+      municipio: Joi.string(),
+      colonia: Joi.string(),
+      calle: Joi.string(),
+      exterior: Joi.string(),
+      interior: Joi.string(),
+      entreC1: Joi.string(),
+      entreC2: Joi.string(),
+      referencia: Joi.string(),
+      domType: Joi.string(),
+      num: Joi.string(),
+      numAlterno: Joi.string()
+    }),
+    // Products Data (optional)
+    items : Joi.array().items(
+      Joi.object({
+        categoria: Joi.string(),
+        nombre: Joi.string(),
+        piezas: Joi.number().integer(),
+        disponibles: Joi.number().integer().required(),
+        images: Joi.object({
+          cover: Joi.string(),
+          mini: Joi.string()
+        }),
+        _id : Joi.string().required(),
+        costo: Joi.number().required(),
+        precio: Joi.number().required()
+      })).required(),
+    cobroAdicional: Joi.object({
+      concepto: Joi.string(),
+      cantidad: Joi.number()
+    }),
+    // Shipping Data
+    envio: Joi.object({
+      tipo: Joi.string(),
+      responsable: Joi.string(),
+      costo: Joi.number(),
+      nota: Joi.string(),
+      guia: Joi.array().items(
+        Joi.object({
+          link: Joi.string(),
+          codigo: Joi.string()
+        }))
+    }),
+    // Purchase Data (optional)
+    ventaTipo: Joi.string().required(),
+    responsableVenta: Joi.string().required(),
+    metodoPago: Joi.string().required(),
+    notaVenta: Joi.string(),
+    estatus: Joi.string().required(),
+    totalVenta: Joi.number().required(),
+    totalCosto: Joi.number().required(),
+    date: Joi.date().required()
+  })
+
+  return schema.validate(order, { abortEarly: false })
+}
+
 function validateProducts(order) {
   const schema = Joi.object({
     items : Joi.array().items(Joi.object({
@@ -144,53 +213,7 @@ function validateProducts(order) {
   return schema.validate(order)
 }
 
-function validateOrderWithId(order) {
-  const schema = Joi.object({
-    _id: Joi.string().min(3).required(),
-    envioTipo: Joi.string().min(3),
-    pagoTipo: Joi.string().min(3),
-    correo: Joi.string().min(3).email(),
-    nombre: Joi.string().min(3),
-    apellido: Joi.string().min(3),
-    estatus: Joi.string().min(3),
-    telefono: Joi.string().empty(''),
-    collection_id: Joi.string().empty(''),
-    total: Joi.number(),
-    items : Joi.array().items(Joi.object({
-      piezas: Joi.number().integer(),
-      _id : Joi.string(),
-      disponibles: Joi.number(),
-      precio: Joi.number(),
-      marca: Joi.string().min(3),
-      modelo: Joi.string().min(3),
-      images: Joi.object({
-        cover: Joi.string().min(3),
-        mini: Joi.string().min(3),
-        extra: Joi.array().items(Joi.string().min(3))
-      })
-    })
-    ),
-    domicilio: Joi.object({
-      nombre: Joi.string().empty(''),
-      cp: Joi.string().empty(''),
-      estado: Joi.string().empty(''),
-      municipio: Joi.string().empty(''),
-      colonia: Joi.string().empty(''),
-      calle: Joi.string().empty(''),
-      exterior: Joi.string().empty(''),
-      interior: Joi.string().empty(''),
-      entreC1: Joi.string().empty(''),
-      entreC2: Joi.string().empty(''),
-      referencia: Joi.string().empty(''),
-      domType: Joi.string().empty(''),
-      num: Joi.string().empty('')
-    })
-  })
-
-  return schema.validate(order)
-}
-
 exports.Order = Order ;
 exports.validateOrderLocal = validateOrderLocal;
-exports.validateOrderWithId = validateOrderWithId;
+exports.validateOrderLocalWithId = validateOrderLocalWithId;
 exports.validateProducts = validateProducts;

@@ -34,5 +34,31 @@ function validateSearch(searchObj) {
   return schema.validate(searchObj)
 }
 
+function validateSearchOrders(searchObj) {
+  const schema = Joi.object({
+    pageNumber: Joi.number().required(),
+    pageSize: Joi.number().required(),
+    searchedValue: Joi.string().min(3).max(20),
+    filters: Joi.object({
+      finalDate: Joi.date().when('startDate', { is: Joi.date().required(), then: Joi.required(), otherwise: Joi.optional() }),
+      startDate: Joi.date(),
+      ventaTipo: Joi.string().optional(),
+      metodoPago: Joi.string().optional(),
+      responsableVenta: Joi.string().optional(),
+      estatus: Joi.string().optional()
+    }).optional(),
+    sortBy: Joi.object({
+      date: Joi.date().optional(),
+      totalVenta: Joi.number().optional(),
+      totalCosto: Joi.number().optional(),
+      responsableVenta: Joi.string().optional(),
+      estatus: Joi.string().optional()
+    }).optional()
+  })
+
+  return schema.validate(searchObj)
+}
+
 exports.validateSearch = validateSearch;
 exports.validatePagination = validatePagination;
+exports.validateSearchOrders = validateSearchOrders;

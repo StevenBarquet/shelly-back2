@@ -3,10 +3,11 @@
 const express = require('express');
 const debug=require('debug')('app:test')
 // Others
-const { Order, validateOrderLocal } = require('../data-modell/orders');
+const { Order, validateOrderLocal, validateOrderLocalWithId } = require('../data-modell/orders');
 const { Utility } = require('../data-modell/utility');
 const { Product } = require('../data-modell/product');
 const wrapDBservice = require('./wrapDBservice');
+const { validatePagination, validateSearchOrders } = require('../data-modell/otherValidators')
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
@@ -37,6 +38,33 @@ router.post('/ventaLocal', async (req, res)=>{
 
 })
 
+// ------Update One------------
+router.put('/editar', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateOrderLocalWithId(req.body)
+  if(validateBody.error){
+    res.status(400).send(validateBody.error)
+    return;
+  }
+
+  wrapDBservice(res, updateOneOrder, req.body);
+})
+
+// ------Delete One------------
+router.delete('/borrar/:id', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const itemId = req.params.id
+  if(!itemId){
+    res.status(400).send({ error: 'There is no ID for delete' })
+    return;
+  }
+
+  wrapDBservice(res, deleteOneOrder, itemId);
+})
+
+// Valida que sean productos de una orden validos
 router.post('/verifyProducts', (req, res)=>{
   debug('requested from: ', req.url)
 
@@ -50,7 +78,67 @@ router.post('/verifyProducts', (req, res)=>{
   wrapDBservice(res, validateProductsDB, req.body);
 })
 
+// ----- Read One -------
+router.get('/:id', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const itemId = req.params.id
+  if(!itemId){
+    res.status(400).send({ error: 'There is no ID for search' })
+    return;
+  }
+
+  wrapDBservice(res, getOneOrder, itemId);
+})
+
+// ------Get all paginated------------
+router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validatePagination(req.params)
+  if(validateBody.error){
+    res.status(400).send(validateBody.error)
+    return;
+  }
+
+  // res.send({ status: 'success', data:  req.params })
+  wrapDBservice(res, getAllOrdersPaginated, req.params);
+})
+
+// ------Get products search------------
+router.post('/buscar', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateSearchOrders(req.body)
+  if(validateBody.error){
+    res.status(400).send(validateBody.error)
+    return;
+  }
+
+  // res.send({ status: 'success', data:  req.params })
+  wrapDBservice(res, searchOrders, req.body);
+})
+
 // ----------------------------------------------MAIN METHODS---------------------------------------
+async function getOneOrder(id) {
+  // Trae un producto de la base de datos
+  try {
+    const someOrder = await Order.findById(id)
+    debug('------getOneOrder-----\nsuccess\n', someOrder);
+    return {
+      internalError: false,
+      result: someOrder
+    }
+  } catch (error) {
+    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+    debug('------getOneOrder-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 404 }
+    };
+  }
+}
+
 async function createLocalOrder(data){
   // Crea una orden local, registra su utilidad y elimina inventario de los productos vendidos
   const { utility, dbProducts, items, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
@@ -89,11 +177,163 @@ async function createLocalOrder(data){
   };
 }
 
+async function updateOneOrder(data) {
+  // Actualiza una orden en la base de datos si existe
+
+  // Valida que todos los productos existan
+  const dbProducts= await searchProductsLocal(data.items);
+  if(dbProducts.length === 0 || dbProducts.length !== data.items.length)
+    return(
+      { internalError: true,
+        result: { errorType: 'Productos no encontrados', productosValidos: dbProducts || [] }
+      })
+
+  // verifica que exista la orden
+  try {
+    const someOrder = await Order.findById(data._id)
+    try {
+      // si existe intenta hacer update de la orden
+      someOrder.set({
+        ...data
+      })
+      const result = await someOrder.save();
+      debug('------updateOneOrder-----\nsuccess\n', result);
+      return {
+        internalError: false,
+        result: { status: 'success' }
+      };
+    } catch (error) {
+      // retorna error si no pudiste hacer update
+      debug('------updateOneOrder----\nInternal error\n\n', error);
+      return {
+        internalError: true,
+        result: { ...error, statusError: 500 }
+      }
+    }
+  } catch (error) {
+    // retorna error si no pudiste hacer busqueda de la orden por id no valido
+    debug('------updateOneProduct-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 404 }
+    };
+
+  }
+}
+
+async function deleteOneOrder(id) {
+  // Elimina un producto en la base de datos si existe
+  try {
+    // verifica que exista el producto
+    await Order.findById(id);
+    try {
+      // si existe intenta hacer el DELETE
+      const result = await Order.deleteOne({ _id: id })
+      debug('------deleteOneOrder-----\nsuccess\n', result);
+      return {
+        internalError: false,
+        result: { status: 'success' }
+      }
+    } catch (error) {
+      // retorna error si no pudiste hacer DELETE
+      debug('------deleteOneOrder----\nInternal error\n\n', error);
+      return {
+        internalError: true,
+        result: { ...error, statusError: 401 }
+      }
+    }
+  } catch (error) {
+    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+    debug('------deleteOneOrder-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 404 }
+    };
+  }
+}
+
+async function getAllOrdersPaginated(params) {
+  // Trae todos los productos de la base de datos paginado
+  const { pageNumber, pageSize } = params;
+  const pageNumberInt = parseInt(pageNumber);
+  const pageSizeInt = parseInt(pageSize);
+  try {
+    const order = await Order
+      .find()
+      .sort({ date: 1 })
+      .skip((pageNumberInt-1) *  pageSizeInt)
+      .limit(pageSizeInt)
+    ;
+    const orderCount = await Order.find().countDocuments();
+
+    debug('------getAllOrdersPaginated-----\nsuccess\n', order);
+    return {
+      internalError: false,
+      result: { orderCount, order }
+    };
+  } catch (error) {
+    debug('------getAllOrdersPaginated-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 500 }
+    }
+  }
+}
+
+async function searchOrders(data) {
+  // Trae todos los productos que coincidan con los criterios de busqueda
+  const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
+  const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
+  const fixFilters = cleanDateTimeFilters(filters)
+  const sortOrder = sortBy || { date: 1 }
+  let orders; let orderCount;
+
+  try {
+    if(searchedValue){
+      orders = await Order
+        .find(fixFilters)
+        .sort(sortOrder)
+        .or([{ nombre: regEx }, { apellido: regEx }, { telefono: regEx }, { ventaTipo: regEx }, { responsableVenta: regEx }, { metodoPago: regEx }, { notaVenta: regEx }, { estatus: regEx }])
+        .skip((pageNumber-1) *  pageSize)
+        .limit(pageSize);
+
+      orderCount = await Order
+        .find(fixFilters)
+        .sort(sortOrder)
+        .or([{ apellido: regEx }, { telefono: regEx }, { ventaTipo: regEx }, { responsableVenta: regEx }, { metodoPago: regEx }, { notaVenta: regEx }, { estatus: regEx }])
+        .countDocuments();
+    } else{
+      orders = await Order
+        .find(fixFilters)
+        .sort(sortOrder)
+        .skip((pageNumber-1) *  pageSize)
+        .limit(pageSize);
+
+      orderCount = await Order
+        .find(fixFilters)
+        .sort(sortOrder)
+        .countDocuments();
+    }
+
+    debug('------searchOrders-----\nsuccess\n', orders);
+    return {
+      internalError: false,
+      result: { orderCount, orders }
+    };
+  } catch (error) {
+    debug('------searchOrders-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 500 }
+    }
+  }
+}
+
 async function validateProductsDB(data) {
   // Valida si la lista de productos existen, son válidos en la db y los costos y precios coincidan
   const products = data.items
 
-  const dbProducts= await searchProducts(products);
+  const dbProducts= await searchProductsLocal(products);
   if(dbProducts.length === 0 || dbProducts.length !== products.length)
     return(
       { internalError: true,
@@ -117,18 +357,18 @@ async function validateProductsDB(data) {
   return (
     {
       internalError: false,
-      result: { dbProducts, utility }
+      result: { status: 'success', dbProducts, utility }
     }
   )
 }
 // -------------------------------------------------METHODS-----------------------------------------
-async function searchProducts(items) {
+async function searchProductsLocal(items) {
   // valida que un array de productos coincida en DB y retorna la lista desde la DB
   const itemsIDs = items.map(item => item._id);
   try {
     // Verifica que existan los productos de la orden
     const someProducts = await Product
-      .find({ _id: { $in: itemsIDs }, online: true, disponibles: { $gt: 0 } })
+      .find({ _id: { $in: itemsIDs }, disponibles: { $gt: 0 } })
     return someProducts
   } catch (error) {
     debug('------No se encontraron los IDs de los productos-----\nInternal error\n\n', error);
@@ -242,6 +482,17 @@ async function createAnyUtility(data){
       result: { ...error, statusError: 401 }
     }
   }
+}
+
+function cleanDateTimeFilters(filters) {
+  const { startDate, finalDate } = filters
+  if(startDate){
+    const regEx ={ $gte: `${startDate}T00:00:00.000+00:00`, $lte: `${finalDate}T23:59:59.000+00:00` }
+    delete filters.startDate;
+    delete filters.finalDate;
+    return { ...filters, date: regEx }
+  }
+  return filters
 }
 
 module.exports = router;
