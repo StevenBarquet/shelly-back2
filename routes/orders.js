@@ -53,9 +53,9 @@ router.post('/verifyProducts', (req, res)=>{
 // ----------------------------------------------MAIN METHODS---------------------------------------
 async function createLocalOrder(data){
   // Crea una orden local, registra su utilidad y elimina inventario de los productos vendidos
-  const { utility, dbProducts, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
+  const { utility, dbProducts, items, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
   const { totalVenta, totalCosto, utilidad } = utility
-  const orderData = { items: dbProducts, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
+  const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
 
   const newOrder = await createAnyOrder(orderData)
 
@@ -67,8 +67,14 @@ async function createLocalOrder(data){
   const utilityData = { idOrden: newOrder.result.data._id, utilidad }
   const utilityDBresponse = await createAnyUtility(utilityData)
   if(utilityDBresponse.internalError){
-    debug('------createLocalOrder-----\nError al registrar utilidad\n\n', newOrder.result);
+    debug('------createLocalOrder-----\nError al registrar utilidad\n\n', utilityDBresponse.result);
     return utilityDBresponse
+  }
+
+  const removeInvresponse = await removeFromInventory(dbProducts, items);
+  if(removeInvresponse.internalError){
+    debug('------createLocalOrder-----\nError al remover stock del inventario\n\n', removeInvresponse.result);
+    return removeInvresponse
   }
 
   // remove from inventrary function
@@ -123,20 +129,42 @@ async function searchProducts(items) {
     // Verifica que existan los productos de la orden
     const someProducts = await Product
       .find({ _id: { $in: itemsIDs }, online: true, disponibles: { $gt: 0 } })
-      .select({
-        _id : 1,
-        nombre: 1,
-        categoria: 1,
-        disponibles: 1,
-        costo: 1,
-        precioPlaza: 1,
-        'images.cover': 1,
-        'images.mini': 1
-      })
     return someProducts
   } catch (error) {
     debug('------No se encontraron los IDs de los productos-----\nInternal error\n\n', error);
     return []
+  }
+}
+
+async function removeFromInventory(fullProducts, soldProducts) {
+  // construye un array de productos con inventario descontado y lo actualiza en db
+  const newFullProducts = fullProducts.map((product, index)=>{
+    return {
+      ...product.toJSON(),
+      disponibles: product.disponibles-soldProducts[index].piezas
+    }
+  })
+
+  try {
+    const dbUpdatedProducts = await Product.bulkWrite(
+      newFullProducts.map(product =>({
+        updateOne: {
+          filter: { _id: product._id },
+          update: { $set: product }
+        }
+      }))
+    )
+    debug('------removeFromInventory-----\nsuccess\n', dbUpdatedProducts);
+    return {
+      internalError: false,
+      result: { status: 'success', data: dbUpdatedProducts }
+    }
+  } catch (error) {
+    debug('------removeFromInventory-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 401 }
+    }
   }
 }
 
