@@ -95,11 +95,11 @@ docker container ls
 docker container rm -f 
 docker image ls
 docker image rm -f 
-docker build -t shelly_back2 .
+docker build -t shelly_back_image .
 docker image ls
-docker run --link shelly-mongo:mongo --name shelly-manual-backend --network manual-network-shelly -p 5000:5000 -d shelly_back2
+docker run --link shelly-mongo:mongo --name shelly-back-container --network shelly-network  -p 5000:5000 -d shelly_back_image
 docker container ls
-docker container logs shelly_back2 .
+docker container logs shelly-back-container .
 
 check changes done in postman
 
