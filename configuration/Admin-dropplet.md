@@ -97,7 +97,7 @@ docker image ls
 docker image rm -f 
 docker build -t shelly_back2 .
 docker image ls
-docker run --link shelly-mongo:mongo --name shelly-manual-backend --network manual-network-shelly -p 5000:5000 -d shelly_back2
+docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 5000:5000 -d shelly_back2
 docker container ls
 docker container logs shelly_back2 .
 
@@ -112,7 +112,7 @@ docker run --name SSL-example-container -p 5001:5001 -d ssl-example/image
 
 docker network create <NAME>
 
-docker volume create my-volume // real data created in /var/lib/docker/volumes/my-volume
+docker volume create shelly-volume // real data created in /var/lib/docker/volumes/shelly-volume
 
 docker run --name some-mongo -d mongo:tag
 
@@ -122,9 +122,9 @@ docker run --name some-mongo -v /my/own/datadir:/data/db -d mongo
 
 Final command mongo create mongodb cluster in local server
 
-    docker network create manual-network-shelly
+    docker network create shelly-network
 
- docker run -it --name shelly-mongo --network manual-network-shelly -v shelly-volume:/data/db -d mongo:latest
+    docker run -it --name shelly-mongo --network shelly-network -v shellydata:/data/db -d mongo
 
  --name <NAME>
  --network <Network Name> // to restart always in that network

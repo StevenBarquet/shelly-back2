@@ -3,3 +3,13 @@ Registrar venta:
 	-Validar existencia y unidades de la lista de productos (hacer un servicio y funcion sólo para ésto)
 	-registrar orden, utilidad y descontar inventario (hacer funcion descontadora de inventario)
 	-Restar vendidos de inventario: traer lista completa, iterar y restar piezas, hacer multiUpdate en productos para guardar productos con su nueva cantidad de disponibles
+	-validacion: Ordenes que reciban almenos un item en la lista de productos
+	-Agregar descuento a productos
+	-Agregar campo de parrafo a los banners
+	-Agregar servicio de blogs
+	-Generar Folio de orden (checar)
+	-modificar longitud de searched value a 24
+	-Agregar filtrado de productos con descuento y sin descuento
+	-considerar contadores de productos en sort
+	-considerar contador de ventas por producto en ordenes
+	-Falta servicio incrementador de visitas y preguntas

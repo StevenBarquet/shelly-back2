@@ -47,13 +47,16 @@ router.get('/all', (req, res)=>{
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getAllHome);
 })
-
 // ------Read Home index 0 ------------
 router.get('/getHome', (req, res)=>{
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getHome);
 })
-
+// ------Read Home index 0 for clients ------
+router.get('/getHomePublic', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+  wrapDBservice(res, getHomeClient);
+})
 // ------Update One------------
 router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
@@ -147,11 +150,42 @@ async function getHome() {
   }
 }
 
+async function getHomeClient() {
+  // Trae todos los productos de la base de datos
+  try {
+    const fullHome = await Home
+      .find().
+      sort({ sortIndex: 1 });
+
+    try {
+      debug('------getAllHome-----\nsuccess\n', fullHome);
+      const filtredHome = bannerFilter(fullHome[0])
+      return {
+        internalError: false,
+        result: filtredHome
+      };
+    } catch (error) {
+      debug('------getAllHome-----\nInternal error\n\n', error);
+      return {
+        internalError: true,
+        result: { ...error, statusError: 500 }
+      }
+    }
+  } catch (error) {
+    debug('------getAllHome-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, statusError: 500 }
+    }
+  }
+}
+
 async function updateHome(data) {
 // Actualiza un producto en la base de datos si existe
   try {
     // verifica que exista el producto
     const someHome = await Home.findById(data._id)
+    debug('------someHome-----\ntest\n', someHome);
     try {
       // si existe intenta hacer update del producto
       someHome.set({
@@ -165,7 +199,7 @@ async function updateHome(data) {
       };
     } catch (error) {
       // retorna error si no pudiste hacer update
-      debug('------updateHome----\nInternal error\n\n', error);
+      debug('------updateHome----\nUpdate error\n\n', error);
       return {
         internalError: true,
         result: { ...error, statusError: 500 }
@@ -173,7 +207,7 @@ async function updateHome(data) {
     }
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no valido
-    debug('------updateHome-----\nInternal error\n\n', error);
+    debug('------updateHome-----\nHome no encontrado\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 404 }
@@ -210,6 +244,16 @@ async function deleteOneHome(id) {
       result: { ...error, statusError: 404 }
     };
   }
+}
+
+function bannerFilter(homeObj) {
+  const { banners } = homeObj;
+  if(banners && banners.length > 0){
+    const newBanners = banners.filter(element =>  element.visible === true)
+    return { ...homeObj.toJSON(), banners: newBanners }
+  }
+
+  return homeObj
 }
 
 module.exports = router;
