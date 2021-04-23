@@ -22,6 +22,7 @@ const productSchema = new mongoose.Schema({
   estetica: String,
   categoria:{ type: String, required: true },
   subcategoria: String,
+  descuento: { type: Number, required: true },
   countVisits: Number,
   countQuestions: Number,
   countPurchases: Number,
@@ -50,7 +51,8 @@ function validateProduct(product) {
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
     categoria: Joi.string().required(),
-    subcategoria: Joi.string().optional()
+    subcategoria: Joi.string().optional(),
+    descuento: Joi.number().min(0).max(99).required()
   })
 
   return schema.validate(product)
@@ -75,7 +77,8 @@ function validateProductWithId(product) {
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
     categoria: Joi.string().required(),
-    subcategoria: Joi.string().optional()
+    subcategoria: Joi.string().optional(),
+    descuento: Joi.number().min(0).max(99).required()
   })
 
   return schema.validate(product)

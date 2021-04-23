@@ -165,47 +165,56 @@ async function getAllProductsPaginated(params) {
   }
 }
 
+function fixFilters(filters) {
+  const { descuento } = filters
+  if(descuento === undefined)
+    return filters
+  if(descuento)
+    return { ...filters, descuento: { $ne:0 } }
+  return { ...filters, descuento: 0 }
+}
 async function searchProducts(data) {
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
   const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
   const sortOrder = sortBy || { nombre: 1 }
   let products; let productCount;
+  const newFilters = fixFilters(filters);
 
   try {
     if(searchedValue){
       products = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
         .skip((pageNumber-1) *  pageSize)
         .limit(pageSize);
 
       productCount = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
         .count();
     } else{
       products = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .skip((pageNumber-1) *  pageSize)
         .limit(pageSize);
 
       productCount = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .count();
     }
 
-    debug('------getAllProducts-----\nsuccess\n', products);
+    debug('------searchProducts-----\nsuccess\n');
     return {
       internalError: false,
       result: { productCount, products }
     };
   } catch (error) {
-    debug('------getAllProducts-----\nInternal error\n\n', error);
+    debug('------searchProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 500 }

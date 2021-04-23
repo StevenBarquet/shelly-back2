@@ -97,11 +97,7 @@ docker image ls
 docker image rm -f 
 docker build -t shelly_back_image .
 docker image ls
-<<<<<<< HEAD
 docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 5000:5000 -d shelly_back2
-=======
-docker run --link shelly-mongo:mongo --name shelly-back-container --network shelly-network  -p 5000:5000 -d shelly_back_image
->>>>>>> 4328a3a6fb8a11ec7b912673bbfaccb1b1015526
 docker container ls
 docker container logs shelly-back-container
 

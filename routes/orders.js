@@ -145,13 +145,14 @@ async function createLocalOrder(data){
   const { totalVenta, totalCosto, utilidad } = utility
   const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
 
+  // --Registrar Orden en DB
   const newOrder = await createAnyOrder(orderData)
-
   if(newOrder.internalError){
     debug('------createLocalOrder-----\nError al crear orden\n\n', newOrder.result);
     return newOrder
   }
 
+  // --Registrar Utilidad en DB
   const utilityData = { idOrden: newOrder.result.data._id, utilidad }
   const utilityDBresponse = await createAnyUtility(utilityData)
   if(utilityDBresponse.internalError){
@@ -159,14 +160,14 @@ async function createLocalOrder(data){
     return utilityDBresponse
   }
 
+  // --Remover inventario vendido en DB y hacer incremento de contador de venta por producto
   const removeInvresponse = await removeFromInventory(dbProducts, items);
   if(removeInvresponse.internalError){
     debug('------createLocalOrder-----\nError al remover stock del inventario\n\n', removeInvresponse.result);
     return removeInvresponse
   }
 
-  // remove from inventrary function
-
+  // --Retornar success de orden creada y todo lo que implica
   debug('------createLocalOrder-----\nsuccess\n');
   return {
     internalError: false,
@@ -333,6 +334,12 @@ async function validateProductsDB(data) {
   // Valida si la lista de productos existen, son válidos en la db y los costos y precios coincidan
   const products = data.items
 
+  if(products.length < 1)
+    return(
+      { internalError: true,
+        result: { errorType: 'Sin productos no se puede registrar orden', products }
+      })
+
   const dbProducts= await searchProductsLocal(products);
   if(dbProducts.length === 0 || dbProducts.length !== products.length)
     return(
@@ -379,9 +386,11 @@ async function searchProductsLocal(items) {
 async function removeFromInventory(fullProducts, soldProducts) {
   // construye un array de productos con inventario descontado y lo actualiza en db
   const newFullProducts = fullProducts.map((product, index)=>{
+    const { disponibles, countPurchases } =product;
     return {
       ...product.toJSON(),
-      disponibles: product.disponibles-soldProducts[index].piezas
+      disponibles: disponibles-soldProducts[index].piezas,
+      countPurchases: countPurchases?countPurchases+1: 1
     }
   })
 

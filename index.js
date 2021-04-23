@@ -12,6 +12,7 @@ const productAdminRoutes = require('./routes/productsAdmin')
 const productClientRoutes = require('./routes/productsClient')
 const homeServicesRoutes = require('./routes/home')
 const orderRoutes = require('./routes/orders')
+const analyticsRoutes = require('./routes/analytics')
 // Otros
 const startLogs= require('./configuration/startLogs')
 
@@ -37,6 +38,7 @@ app.use('/admin/productos/', productAdminRoutes)
 app.use('/client/productos/', productClientRoutes)
 app.use('/homeServices/', homeServicesRoutes)
 app.use('/ordenes/', orderRoutes)
+app.use('/analytics/', analyticsRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');

@@ -59,43 +59,6 @@ router.post('/buscar', (req, res)=>{
   wrapDBservice(res, searchProducts, req.body);
 })
 
-// ------Counter Update Visits------------
-router.put('/visitsCounter/:id', (req, res)=>{
-  debug('requested for: ', req.originalUrl)
-
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
-
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countVisits: 1 } });
-})
-// ------Counter Update Questions------------
-router.put('/questionCounter/:id', (req, res)=>{
-  debug('requested for: ', req.originalUrl)
-
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
-
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countQuestions: 1 } });
-})
-// ------Counter Update Purchases------------
-router.put('/purchasesCounter/:id', (req, res)=>{
-  debug('requested for: ', req.originalUrl)
-
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
-
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countPurchases: 1 } });
-})
-
 // -------------------------------------------------QUERYS-----------------------------------------
 
 async function getAllProducts() {
@@ -147,18 +110,28 @@ async function getAllProductsPaginated(params) {
   }
 }
 
+function fixFilters(filters) {
+  const { descuento } = filters
+  if(descuento === undefined)
+    return filters
+  if(descuento)
+    return { ...filters, descuento: { $ne:0 } }
+  return { ...filters, descuento: 0 }
+}
+
 async function searchProducts(data) {
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
   const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
   const sortOrder = sortBy || { nombre: 1 }
-  const selectValues = { _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, subcategoria: 1, 'images.cover': 1 }
+  const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, subcategoria: 1, 'images.cover': 1 }
   let products; let productCount;
+  const newFilters = fixFilters(filters);
 
   try {
     if(searchedValue){
       products = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .select(selectValues)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }])
@@ -166,33 +139,33 @@ async function searchProducts(data) {
         .limit(pageSize);
 
       productCount = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .select(selectValues)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }])
         .count();
     } else{
       products = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .select(selectValues)
         .skip((pageNumber-1) *  pageSize)
         .limit(pageSize);
 
       productCount = await Product
-        .find(filters)
+        .find(newFilters)
         .sort(sortOrder)
         .select(selectValues)
         .count();
     }
 
-    debug('------getAllProducts-----\nsuccess\n', products);
+    debug('------searchProducts-----\nsuccess\n');
     return {
       internalError: false,
       result: { productCount, products }
     };
   } catch (error) {
-    debug('------getAllProducts-----\nInternal error\n\n', error);
+    debug('------searchProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 500 }
@@ -212,39 +185,6 @@ async function getOneProduct(id) {
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------getOneProduct-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, statusError: 404 }
-    };
-  }
-}
-
-// updateVisits
-async function updateSomeCount(data) {
-  const { id, incrValue } = data
-  // Elimina un producto en la base de datos si existe
-  try {
-    // verifica que exista el producto
-    await Product.findById(id);
-    try {
-      // si existe intenta hacer el Update del contador
-      const result = await Product.findOneAndUpdate({ _id: id }, { $inc : incrValue })
-      debug('------updateVisits-----\nsuccess\n', result);
-      return {
-        internalError: false,
-        result: { status: 'success' }
-      }
-    } catch (error) {
-      // retorna error si no pudiste hacer UPDATE
-      debug('------updateVisits----\nInternal error\n\n', error);
-      return {
-        internalError: true,
-        result: { ...error, statusError: 401 }
-      }
-    }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
-    debug('------updateVisits-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, statusError: 404 }
