@@ -26,6 +26,7 @@ const productSchema = new mongoose.Schema({
   countVisits: Number,
   countQuestions: Number,
   countPurchases: Number,
+  countLocalPurchases: Number,
   date: { type: Date, default: Date.now }
 });
 

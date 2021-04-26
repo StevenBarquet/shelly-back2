@@ -4,6 +4,8 @@
 -Agregar servicio de blogs
 -Generar Folio de orden (checar)
 -Hacer DB de analiticas con eventos purchase, cart
+-Mensajes de error personalizados
+-Agregar contador de ventas locales (diferente de venta sola referente a online)
 
 	Smurfeado:
 -Falta servicio incrementador de visitas y preguntas
