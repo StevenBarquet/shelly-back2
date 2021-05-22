@@ -4,17 +4,15 @@
 -Agregar servicio de blogs
 -Generar Folio de orden (checar)
 -Hacer DB de analiticas con eventos purchase, cart
--Mensajes de error personalizados
--Agregar contador de ventas locales (diferente de venta sola referente a online)
 -Aligerar la cantidad de datos traidos en search admin (solo traer los de la tabla en fornt)
--En utilidad agregar metodo de pago/cobro
 -Tener base de datos de clientes con array de ordenes que incluya id de orden y cantidad gastada
 -Agregar RFC y datos para facturar en orden y db cliente.
--Servicio de buscador de ventas al mostrador sólo debe mostrar disponibles
 -Control de caja, cortes, arqueo, etc.
 -Permitir orden sin productos pero on cobro adicional
+-Mensajes de error personalizados (para orders)
 
 	Smurfeado:
+-En utilidad agregar metodo de pago/cobro
 -Falta servicio incrementador de visitas y preguntas
 -considerar contador de ventas por producto en ordenes
 -modificar longitud de searched value a 25

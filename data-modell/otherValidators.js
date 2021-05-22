@@ -62,6 +62,13 @@ function validateSearchOrders(searchObj) {
   return schema.validate(searchObj)
 }
 
+function isId(str) {
+  const schema =  Joi.string().pattern(/^[0-9a-fA-F]{24}$/)
+
+  return schema.validate(str);
+}
+
 exports.validateSearch = validateSearch;
 exports.validatePagination = validatePagination;
 exports.validateSearchOrders = validateSearchOrders;
+exports.isId = isId;

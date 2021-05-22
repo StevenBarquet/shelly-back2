@@ -4,8 +4,8 @@ const express = require('express');
 const debug=require('debug')('app:test')
 // Others
 const { Product, validateProduct, validateProductWithId } = require('../data-modell/product');
-const { validatePagination, validateSearch } = require('../data-modell/otherValidators')
-const wrapDBservice = require('./wrapDBservice');
+const { validatePagination, validateSearch, isId } = require('../data-modell/otherValidators')
+const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 
 const router = express.Router();
 
@@ -14,13 +14,8 @@ const router = express.Router();
 router.post('/registrar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  // debug('\n----muere aquí-----\n')
-
   const validateBody = validateProduct(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, createOneProduct, req.body);
 })
@@ -35,13 +30,10 @@ router.get('/all', (req, res)=>{
 router.get('/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for search' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, getOneProduct, itemId);
+  wrapDBservice(res, getOneProduct, id);
 })
 
 // ------Update One------------
@@ -49,10 +41,7 @@ router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateProductWithId(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, updateOneProduct, req.body);
 })
@@ -61,13 +50,10 @@ router.put('/editar', (req, res)=>{
 router.delete('/borrar/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, deleteOneProduct, itemId);
+  wrapDBservice(res, deleteOneProduct, id);
 })
 
 // ------Get all paginated------------
@@ -75,12 +61,8 @@ router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validatePagination(req.params)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, getAllProductsPaginated, req.params);
 })
 
@@ -89,12 +71,8 @@ router.post('/buscar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateSearch(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, searchProducts, req.body);
 })
 
@@ -114,7 +92,7 @@ async function createOneProduct(data) {
     debug('------createOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 401 }
+      result: { ...error, errorType: 'Error al crear producto en DB', statusError: 401 }
     }
   }
 }
@@ -132,7 +110,7 @@ async function getAllProducts() {
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
     }
   }
 }
@@ -160,7 +138,7 @@ async function getAllProductsPaginated(params) {
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
     }
   }
 }
@@ -173,6 +151,7 @@ function fixFilters(filters) {
     return { ...filters, descuento: { $ne:0 } }
   return { ...filters, descuento: 0 }
 }
+
 async function searchProducts(data) {
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
@@ -217,7 +196,7 @@ async function searchProducts(data) {
     debug('------searchProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error,  errorType: 'Error al traer productos de DB', statusError: 500 }
     }
   }
 }
@@ -236,7 +215,7 @@ async function getOneProduct(id) {
     debug('------getOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error,  errorType: 'Error al traer producto de DB', statusError: 404 }
     };
   }
 }
@@ -262,7 +241,7 @@ async function updateOneProduct(data) {
       debug('------updateOneProduct----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error, errorType: 'Error al actualizar producto en DB', statusError: 500 }
       }
     }
   } catch (error) {
@@ -270,7 +249,7 @@ async function updateOneProduct(data) {
     debug('------updateOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error,  errorType: 'Error al buscar producto en DB', statusError: 404 }
     };
 
   }
@@ -294,7 +273,7 @@ async function deleteOneProduct(id) {
       debug('------deleteOneProduct----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 401 }
+        result: { ...error, errorType: 'Error al borrar producto en DB', statusError: 401 }
       }
     }
   } catch (error) {
@@ -302,7 +281,7 @@ async function deleteOneProduct(id) {
     debug('------deleteOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al buscar producto en DB', statusError: 404 }
     };
   }
 }

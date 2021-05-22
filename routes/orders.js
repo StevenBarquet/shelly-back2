@@ -6,8 +6,8 @@ const debug=require('debug')('app:test')
 const { Order, validateOrderLocal, validateOrderLocalWithId } = require('../data-modell/orders');
 const { Utility } = require('../data-modell/utility');
 const { Product } = require('../data-modell/product');
-const wrapDBservice = require('./wrapDBservice');
-const { validatePagination, validateSearchOrders } = require('../data-modell/otherValidators')
+const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
+const { validatePagination, validateSearchOrders, isId } = require('../data-modell/otherValidators')
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
@@ -19,12 +19,8 @@ const router = express.Router();
 router.post('/ventaLocal', async (req, res)=>{
   debug('requested from: ', req.url)
 
-  const { error } = validateOrderLocal(req.body)
-  if(error){
-    debug('Error de Joi')
-    res.status(400).send({ messageError: error.details[0].message })
-    return;
-  }
+  const validateBody = validateOrderLocal(req.body)
+  joiCheck(res, validateBody);
 
   const { internalError, result } = await validateProductsDB(req.body);
   if(internalError){
@@ -43,10 +39,7 @@ router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateOrderLocalWithId(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, updateOneOrder, req.body);
 })
@@ -55,25 +48,18 @@ router.put('/editar', (req, res)=>{
 router.delete('/borrar/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, deleteOneOrder, itemId);
+  wrapDBservice(res, deleteOneOrder, id);
 })
 
 // Valida que sean productos de una orden validos
 router.post('/verifyProducts', (req, res)=>{
   debug('requested from: ', req.url)
 
-  const { error } = validateOrderLocal(req.body)
-  if(error){
-    debug('Error de Joi')
-    res.status(400).send({ messageError: error.details[0].message })
-    return;
-  }
+  const validateBody = validateOrderLocal(req.body)
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, validateProductsDB, req.body);
 })
@@ -82,13 +68,10 @@ router.post('/verifyProducts', (req, res)=>{
 router.get('/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for search' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, getOneOrder, itemId);
+  wrapDBservice(res, getOneOrder, id);
 })
 
 // ------Get all paginated------------
@@ -96,12 +79,8 @@ router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validatePagination(req.params)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, getAllOrdersPaginated, req.params);
 })
 
@@ -110,12 +89,8 @@ router.post('/buscar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateSearchOrders(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, searchOrders, req.body);
 })
 
@@ -153,7 +128,7 @@ async function createLocalOrder(data){
   }
 
   // --Registrar Utilidad en DB
-  const utilityData = { idOrden: newOrder.result.data._id, utilidad }
+  const utilityData = { idOrden: newOrder.result.data._id, utilidad, metodoPago }
   const utilityDBresponse = await createAnyUtility(utilityData)
   if(utilityDBresponse.internalError){
     debug('------createLocalOrder-----\nError al registrar utilidad\n\n', utilityDBresponse.result);
@@ -333,13 +308,29 @@ async function searchOrders(data) {
 async function validateProductsDB(data) {
   // Valida si la lista de productos existen, son válidos en la db y los costos y precios coincidan
   const products = data.items
+  const { cobroAdicional } = data
 
+  // Case: No hay productos pero si hay cobro adicional
+  if(products.length === 0 && cobroAdicional && cobroAdicional.cantidad > 0){
+    const utilityAdicional= {
+      totalVenta: cobroAdicional.cantidad,
+      totalCosto: 0,
+      utilidad: cobroAdicional.cantidad
+    }
+    return(
+      { internalError: false,
+        result: { status: 'success', onlyCobroAdicional: true, dbProducts: [], utility: utilityAdicional }
+      })
+  }
+
+  // Case: No hay productos ni cobro adicional
   if(products.length < 1)
     return(
       { internalError: true,
-        result: { errorType: 'Sin productos no se puede registrar orden', products }
+        result: { errorType: 'Sin productos o cobro adicional no se puede registrar orden', products }
       })
 
+  // Case: Si hay productos pero ya no estan disponibles en DB
   const dbProducts= await searchProductsLocal(products);
   if(dbProducts.length === 0 || dbProducts.length !== products.length)
     return(
@@ -347,6 +338,7 @@ async function validateProductsDB(data) {
         result: { errorType: 'Productos no encontrados', productosValidos: dbProducts || [] }
       })
 
+  // Case: Si hay productos pero no hay stock de las piezas solicitadas
   const piezas= piezasVSdisponibles(products, dbProducts);
   if(piezas.length !== 0)
     return(
@@ -354,6 +346,7 @@ async function validateProductsDB(data) {
         result: { errorType: 'Productos con piezas no disponibles', productosError: piezas }
       })
 
+  // Case: Los precios o costos no coinciden en DB
   const { sumaMatch, utility } = localOrderUtilityCalculator({ ...data, dbProducts });
   if(!sumaMatch)
     return(
@@ -361,6 +354,7 @@ async function validateProductsDB(data) {
         result: { errorType: 'El precio o costo de los productos no coincide con DB', productosValidos: dbProducts }
       })
 
+  // Case: Exito
   return (
     {
       internalError: false,

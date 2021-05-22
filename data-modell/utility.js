@@ -6,6 +6,7 @@ const utilitySchema = new mongoose.Schema({
   idOrden: String,
   notaUtilidad: String,
   utilidad: { type: Number, required: true },
+  metodoPago: { type: String, required: true },
   date: { type: Date, default: Date.now }
 });
 
@@ -17,6 +18,7 @@ function validateUtility(utility) {
   const schema = Joi.object({
     idOrden: Joi.string(),
     notaUtilidad: Joi.string(),
+    metodoPago: Joi.string().required(),
     utilidad: Joi.number().required()
   })
 

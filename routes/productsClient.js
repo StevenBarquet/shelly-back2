@@ -4,8 +4,8 @@ const express = require('express');
 const debug=require('debug')('app:test')
 // Others
 const { Product } = require('../data-modell/product');
-const { validatePagination, validateSearch } = require('../data-modell/otherValidators')
-const wrapDBservice = require('./wrapDBservice');
+const { validatePagination, validateSearch, isId } = require('../data-modell/otherValidators')
+const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 
 const router = express.Router();
 
@@ -20,13 +20,10 @@ router.get('/all', (req, res)=>{
 router.get('/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for search' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, getOneProduct, itemId);
+  wrapDBservice(res, getOneProduct, id);
 })
 
 // ------Get all paginated------------
@@ -34,12 +31,8 @@ router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validatePagination(req.params)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, getAllProductsPaginated, req.params);
 })
 
@@ -50,12 +43,8 @@ router.post('/buscar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateSearch(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
-  // res.send({ status: 'success', data:  req.params })
   wrapDBservice(res, searchProducts, req.body);
 })
 
@@ -76,7 +65,7 @@ async function getAllProducts() {
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer el productos de DB', statusError: 500 }
     }
   }
 }
@@ -105,7 +94,7 @@ async function getAllProductsPaginated(params) {
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer el productos de DB', statusError: 500 }
     }
   }
 }
@@ -168,7 +157,7 @@ async function searchProducts(data) {
     debug('------searchProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer el productos de DB', statusError: 500 }
     }
   }
 }
@@ -187,7 +176,7 @@ async function getOneProduct(id) {
     debug('------getOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al traer el producto de DB', statusError: 404 }
     };
   }
 }

@@ -20,13 +20,11 @@ const productSchema = new mongoose.Schema({
   nuevo: { type: Boolean, required: true },
   descripcion: String,
   estetica: String,
-  categoria:{ type: String, required: true },
-  subcategoria: String,
+  categoria:[{ type: String, required: true }],
   descuento: { type: Number, required: true },
   countVisits: Number,
   countQuestions: Number,
   countPurchases: Number,
-  countLocalPurchases: Number,
   date: { type: Date, default: Date.now }
 });
 
@@ -51,8 +49,7 @@ function validateProduct(product) {
     nuevo: Joi.boolean().required(),
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
-    categoria: Joi.string().required(),
-    subcategoria: Joi.string().optional(),
+    categoria: Joi.array().items(Joi.string()),
     descuento: Joi.number().min(0).max(99).required()
   })
 
@@ -77,8 +74,7 @@ function validateProductWithId(product) {
     nuevo: Joi.boolean().required(),
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
-    categoria: Joi.string().required(),
-    subcategoria: Joi.string().optional(),
+    categoria: Joi.array().items(Joi.string()),
     descuento: Joi.number().min(0).max(99).required()
   })
 

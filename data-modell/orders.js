@@ -54,7 +54,7 @@ const orderSchema = new mongoose.Schema({
   // Purchase Data (optional)
   ventaTipo: { type: String, required: true }, // local 133, fb, página, etc
   responsableVenta: { type: String, required: true }, // empleado, gerente o cliente
-  metodoPago: String,
+  metodoPago: { type: String, required: true },
   notaVenta: String,
   estatus: { type: String, required: true },
   totalVenta: { type: Number, required: true },

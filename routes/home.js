@@ -4,7 +4,8 @@ const express = require('express');
 const debug=require('debug')('app:test')
 // Others
 const { Home, validateHome, validateHomeWithID } = require('../data-modell/home');
-const wrapDBservice = require('./wrapDBservice');
+const { isId } = require('../data-modell/otherValidators');
+const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 
 const router = express.Router();
 const mockHome = {
@@ -34,10 +35,7 @@ router.post('/initializate', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateHome(mockHome)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, startHome, mockHome);
 })
@@ -62,10 +60,7 @@ router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateHomeWithID(req.body)
-  if(validateBody.error){
-    res.status(400).send(validateBody.error)
-    return;
-  }
+  joiCheck(res, validateBody);
 
   wrapDBservice(res, updateHome, req.body);
 })
@@ -74,13 +69,10 @@ router.put('/editar', (req, res)=>{
 router.delete('/borrar/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, deleteOneHome, itemId);
+  wrapDBservice(res, deleteOneHome, id);
 })
 // -------------------------------------------------QUERYS-----------------------------------------
 
@@ -98,13 +90,13 @@ async function startHome(data) {
     debug('------startHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 401 }
+      result: { ...error, errorType: 'Error al crear home en DB', statusError: 401 }
     }
   }
 }
 
 async function getAllHome() {
-// Trae todos los productos de la base de datos
+// Trae todos los home de la base de datos
   try {
     const products = await Home.find().sort({ sortIndex: 1 });
     debug('------getAllHome-----\nsuccess\n', products);
@@ -116,7 +108,7 @@ async function getAllHome() {
     debug('------getAllHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error,  errorType: 'Error al traer todos los home de DB', statusError: 500 }
     }
   }
 }
@@ -124,28 +116,28 @@ async function getAllHome() {
 async function getHome() {
   // Trae todos los productos de la base de datos
   try {
-    const products = await Home
+    const homes = await Home
       .find().
       sort({ sortIndex: 1 });
 
     try {
-      debug('------getAllHome-----\nsuccess\n', products);
+      debug('------getAllHome-----\nsuccess\n', homes);
       return {
         internalError: false,
-        result: products[0]
+        result: homes[0]
       };
     } catch (error) {
       debug('------getAllHome-----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error, errorType: 'Error al traer home[0] de DB', statusError: 500 }
       }
     }
   } catch (error) {
     debug('------getAllHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error,  errorType: 'Error al traer el home de DB', statusError: 500 }
     }
   }
 }
@@ -168,14 +160,14 @@ async function getHomeClient() {
       debug('------getAllHome-----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error, errorType: 'Error al traer el home[0] filtred de DB', statusError: 500 }
       }
     }
   } catch (error) {
     debug('------getAllHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error,  errorType: 'Error al traer el home de DB', statusError: 500 }
     }
   }
 }
@@ -202,7 +194,7 @@ async function updateHome(data) {
       debug('------updateHome----\nUpdate error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error,  errorType: 'Error al actualizar el home en DB', statusError: 500 }
       }
     }
   } catch (error) {
@@ -210,7 +202,7 @@ async function updateHome(data) {
     debug('------updateHome-----\nHome no encontrado\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al traer el home de DB', statusError: 404 }
     };
 
   }
@@ -233,7 +225,7 @@ async function deleteOneHome(id) {
       debug('------deleteOneHome----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 401 }
+        result: { ...error, errorType: 'Error al borrar home de DB', statusError: 401 }
       }
     }
   } catch (error) {
@@ -241,7 +233,7 @@ async function deleteOneHome(id) {
     debug('------deleteOneHome-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al traer el home de DB', statusError: 404 }
     };
   }
 }

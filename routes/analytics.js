@@ -4,7 +4,8 @@ const express = require('express');
 const debug=require('debug')('app:test')
 // Others
 const { Product } = require('../data-modell/product');
-const wrapDBservice = require('./wrapDBservice');
+const { wrapDBservice, checkParams } = require('./respondServices');
+const { isId } = require('../data-modell/otherValidators');
 
 const router = express.Router();
 
@@ -13,37 +14,28 @@ const router = express.Router();
 router.put('/visitsCounter/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countVisits: 1 } });
+  wrapDBservice(res, updateSomeCount, { id, incrValue: { countVisits: 1 } });
 })
 // ------Counter Update Questions------------
 router.put('/questionCounter/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countQuestions: 1 } });
+  wrapDBservice(res, updateSomeCount, { id, incrValue: { countQuestions: 1 } });
 })
 // ------Counter Update Purchases------------
 router.put('/purchasesCounter/:id', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const itemId = req.params.id
-  if(!itemId){
-    res.status(400).send({ error: 'There is no ID for delete' })
-    return;
-  }
+  const { id } = req.params
+  checkParams(res, id, isId)
 
-  wrapDBservice(res, updateSomeCount, { id: itemId, incrValue: { countPurchases: 1 } });
+  wrapDBservice(res, updateSomeCount, { id, incrValue: { countPurchases: 1 } });
 })
 
 // -------------------------------------------------QUERYS-----------------------------------------
@@ -67,7 +59,7 @@ async function updateSomeCount(data) {
       debug('------updateVisits----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 401 }
+        result: { ...error,  errorType: 'Error al modificar producto en DB', statusError: 401 }
       }
     }
   } catch (error) {
@@ -75,7 +67,7 @@ async function updateSomeCount(data) {
     debug('------updateVisits-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al traer producto de DB', statusError: 404 }
     };
   }
 }
