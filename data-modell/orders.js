@@ -7,7 +7,8 @@ const orderSchema = new mongoose.Schema({
   correo: String,
   nombre: String,
   apellido: String,
-  telefono: String,
+  telefono: Number,
+  rfc: String,
   domicilio: {
     nombre: String,
     cp: String,

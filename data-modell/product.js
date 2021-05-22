@@ -61,7 +61,7 @@ function validateProduct(product) {
 
 function validateProductWithId(product) {
   const schema = Joi.object({
-    _id: Joi.string().min(3).required(),
+    _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
     marca: Joi.string().optional(),
     nombre: Joi.string().required(),
     images: Joi.object({

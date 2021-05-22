@@ -429,16 +429,18 @@ function localOrderUtilityCalculator(data){
   // Calcula la utilidad, costos y venta, además valida que los precios y costos coincidan en DB
   const {
     dbProducts,
+    items,
     cobroAdicional,
     totalVenta,
     totalCosto
   } = data
 
-  const productsCost = dbProducts.reduce((pila, product) => pila + product.costo, 0);
-  const productsPrice = dbProducts.reduce((pila, product) => pila + product.precioPlaza, 0);
+  const productsCost = dbProducts.reduce((pila, product, index) => pila + (product.costo*items[index].piezas), 0);
+  const productsPrice = dbProducts.reduce((pila, product, index) => pila + (product.precioPlaza*items[index].piezas), 0);
   const venta = cobroAdicional ? productsPrice + cobroAdicional.cantidad : productsPrice;
   const costo = productsCost
 
+  // debug('venta: ', venta, ', costo: ', costo);
   if(totalVenta === venta && totalCosto === costo){
     return     {
       sumaMatch: true,
@@ -493,6 +495,8 @@ async function createAnyUtility(data){
 }
 
 function cleanDateTimeFilters(filters) {
+  if(!filters)
+    return null
   const { startDate, finalDate } = filters
   if(startDate){
     const regEx ={ $gte: `${startDate}T00:00:00.000+00:00`, $lte: `${finalDate}T23:59:59.000+00:00` }
