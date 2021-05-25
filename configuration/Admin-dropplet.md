@@ -97,12 +97,14 @@ docker image ls
 docker image rm -f 
 docker build -t shelly_back_image .
 docker image ls
-docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 5000:5000 -d shelly_back2
+docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 5000:5000 -d shelly_back_image
 docker container ls
-docker container logs shelly-back-container
+docker container logs shelly-back2-container
 
 check changes done in postman
 
+## Not contenerized DB
+docker run --name shelly-back2-container -p 5000:5000 -d shelly_back_image
 Other:
 
 docker build -t ssl-example/image .

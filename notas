@@ -27,3 +27,9 @@
 	-Validar existencia y unidades de la lista de productos (hacer un servicio y funcion sólo para ésto)
 	-registrar orden, utilidad y descontar inventario (hacer funcion descontadora de inventario)
 	-Restar vendidos de inventario: traer lista completa, iterar y restar piezas, hacer multiUpdate en productos para guardar productos con su nueva cantidad de disponibles
+
+	docker container rm -f shelly-back2-container
+	docker image rm -f shelly_back_image
+	docker build -t shelly_back_image .
+	docker run --network host --name shelly-back2-container -p 5000:5000 -d shelly_back_image
+	docker container logs shelly-back2-container

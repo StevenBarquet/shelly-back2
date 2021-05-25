@@ -1,8 +1,6 @@
 // --------------------------------------IMPORTS------------------------------------
 // Dependencies
 const express = require('express');
-const config = require('config');
-const mongoose = require('mongoose');
 const debugProd=require('debug')('app:prod')
 // Middlewares
 const helmet = require('helmet');
@@ -15,17 +13,14 @@ const orderRoutes = require('./routes/orders')
 const analyticsRoutes = require('./routes/analytics')
 // Otros
 const startLogs= require('./configuration/startLogs')
+const mongoConnect= require('./configuration/mongoConfig')
 
 // -----------------------------------CONFIG-------------------------------
 const app = express();
 const enviroment= process.env.NODE_ENV || 'development'
 const port = process.env.PORT || 4000
 
-// Mongo conect to base
-mongoose.connect(config.get('mongoDB'), { useNewUrlParser: true, useFindAndModify:true, useUnifiedTopology: true }) // return a promise
-  .then(()=>debugProd(`'Conected to ${config.get('mongoDB')}...`))
-  .catch(err=> debugProd('Couldnt connect because:\n', err))
-
+mongoConnect();
 startLogs(enviroment); // Just and example of posible use of configs
 
 // -----------------------------------MIDDLEWARES-------------------------------
