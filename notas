@@ -10,6 +10,8 @@
 -Control de caja, cortes, arqueo, etc.
 -Permitir orden sin productos pero on cobro adicional
 -Mensajes de error personalizados (para orders)
+-Relacionar utilidad id a las ordenes
+-servicio de cancelar orden
 
 	Smurfeado:
 -En utilidad agregar metodo de pago/cobro
