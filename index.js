@@ -14,6 +14,7 @@ const analyticsRoutes = require('./routes/analytics')
 // Otros
 const startLogs= require('./configuration/startLogs')
 const mongoConnect= require('./configuration/mongoConfig')
+const getCerts= require('./configuration/getCerts')
 
 // -----------------------------------CONFIG-------------------------------
 const app = express();
@@ -38,23 +39,11 @@ app.use('/analytics/', analyticsRoutes)
 // -----------------------------------SSL-------------------------------
 const http = require('http');
 const https = require('https');
-const fs = require('fs');
-
-let optionsSSL
-
-try {
-  optionsSSL = {
-    key: fs.readFileSync('./certificates/certificate.key'),
-    cert: fs.readFileSync('./certificates/certificate.crt')
-  };
-} catch (error) {
-  optionsSSL = {};
-}
 
 const trySSL = process.env.USE_SSL || false // Set use of https from enviroment
 
 const server = trySSL ? https : http
-const options = trySSL ? optionsSSL : {}
+const options = trySSL ? getCerts(): {}; // get ssl certs if https true
 
 // -----------------------------------SERVER-------------------------------
 server

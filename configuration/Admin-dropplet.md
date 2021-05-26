@@ -92,19 +92,33 @@ su - botz2
 cd /home/botz2/myFiles/shelly/
 sudo git pull origin master
 docker container ls
-docker container rm -f 
+docker container rm -f shelly-back-container
 docker image ls
-docker image rm -f 
+docker image rm -f shelly_back_image
 docker build -t shelly_back_image .
 docker image ls
-docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 5000:5000 -d shelly_back_image
+docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 4000:4000 -d shelly_back_image
 docker container ls
 docker container logs shelly-back2-container
 
 check changes done in postman
 
 ## Not contenerized DB
-docker run --name shelly-back2-container -p 5000:5000 -d shelly_back_image
+docker run --name shelly-back2-container -p 4000:4000 -d shelly_back_image
+
+## Not contenerized DB with localhost access
+	docker run --network host --name shelly-back-container -p 4000:4000 -d shelly_back_image
+
+## Not contenerized DB with localhost access and lets encrypt volume
+	docker run --network host --name shelly-back-container -p 4000:4000 -d \
+    --mount type=bind,source=/etc/letsencrypt/live/shelly-store.com,target=/etc/letsencrypt/live/shelly-store.com \
+    --mount type=bind,source=/etc/letsencrypt/archive/shelly-store.com,target=/etc/letsencrypt/archive/shelly-store.com \
+    shelly_back_image
+
+## Logs	
+docker container logs shelly-back-container
+
+
 Other:
 
 docker build -t ssl-example/image .
@@ -136,11 +150,3 @@ Final command mongo create mongodb cluster in local server
  -d mongo:latest //version of mongo
  --link shelly-mongo:mongo //Link a node app to a mongo container and then named 'mongo' for //mongo:27017/shelly-store
  
-Build and running node-app
-    // in dir of node app
-    //docker build -t <your username>/node-web-app .
-    docker build -t shelly_backend/custom-app .
-    // docker run -p 49160:8080 -d <your username>/node-web-app
-    docker run --link shelly-mongo:mongo --name shelly-manual-backend --network manual-network -p 4000:4000 -d shelly_backend/custom-app
-
-docker run -p 5001:5001 --name ssl-example-container -d ssl-example/node-app
