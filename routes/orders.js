@@ -245,13 +245,14 @@ async function cancelOneOrder(id) {
   // Elimina un producto en la base de datos si existe
   try {
     // verifica que exista el producto
-    const someOrder = await Order.findById(id);
-
+    let someOrder = await Order.findById(id);
+    someOrder=someOrder.toJSON()
     // Actualizar estatus
-    updateOneOrder({ ...someOrder, estatus: 'cancelado' })
-
+    const orderResponse = await updateOneOrder({ ...someOrder, estatus: 'Cancelado' })
+    if(orderResponse.internalError) return orderResponse
     // Actualizar estatus
-    deleteOneUtility(someOrder.utility)
+    const utilityResponse = await deleteOneUtility(someOrder.utility)
+    return utilityResponse
 
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no encontrado

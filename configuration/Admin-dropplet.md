@@ -127,7 +127,7 @@ docker container logs shelly-back-container
 cd /home/botz/Documents/A_Programing/shelly-back2
 git status
 git add .
-git commit -m "chingo de bugs fixed"
+git commit -m "app changes"
 git push -u origin master
 docker container ls
 docker container rm -f shelly-back-container
