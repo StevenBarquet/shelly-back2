@@ -15,7 +15,9 @@
 -Base de datos con tienda config (reglas de envío, métodos de envío, activar, desactivar notificaciones + reglas)
 -Considerar meter las categorías en base de datos de la tienda
 
+
 	Smurfeado:
+-Buscar por id en ordenes
 -Permitir orden sin productos pero on cobro adicional
 -Mensajes de error personalizados (para orders)
 -Cambiar logs a prod en producción

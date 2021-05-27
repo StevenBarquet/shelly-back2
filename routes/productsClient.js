@@ -132,7 +132,7 @@ async function searchProducts(data) {
         .sort(sortOrder)
         .select(selectValues)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }])
-        .count();
+        .countDocuments();
     } else{
       products = await Product
         .find(newFilters)
@@ -145,7 +145,7 @@ async function searchProducts(data) {
         .find(newFilters)
         .sort(sortOrder)
         .select(selectValues)
-        .count();
+        .countDocuments();
     }
 
     debug('------searchProducts-----\nsuccess\n');

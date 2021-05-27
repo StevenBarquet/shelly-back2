@@ -8,6 +8,7 @@ const { Utility } = require('../data-modell/utility');
 const { Product } = require('../data-modell/product');
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 const { validatePagination, validateSearchOrders, isId } = require('../data-modell/otherValidators')
+const { searchProductByID } = require('../others/otherMethods')
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
@@ -137,16 +138,19 @@ async function createLocalOrder(data){
     return newOrder
   }
 
+  const newOrdeData = newOrder.result.data.toJSON()
+
   // --Registrar Utilidad en DB
-  const utilityData = { idOrden: newOrder.result.data._id, utilidad, metodoPago }
+  const utilityData = { idOrden: newOrdeData._id, utilidad, metodoPago, totalVenta, totalCosto }
   const utilityDBresponse = await createAnyUtility(utilityData)
   if(utilityDBresponse.internalError){
     debug('------createLocalOrder-----\nError al registrar utilidad\n\n', utilityDBresponse.result);
     return utilityDBresponse
   }
 
+  const utilityDataDB = utilityDBresponse.result.data.toJSON()
   // --Agregar id de utilidad a orden
-  const updateResponse = await updateOneOrder({ ...newOrder, utility: utilityDBresponse._id });
+  const updateResponse = await updateOneOrder({ ...newOrdeData, utility: utilityDataDB._id });
   if(updateResponse.internalError){
     debug('------createLocalOrder-----\nError al agregar utilidad id a orden\n\n', utilityDBresponse.result);
     return utilityDBresponse
@@ -172,7 +176,7 @@ async function createLocalOrder(data){
 
 async function updateOneOrder(data) {
   // Actualiza una orden en la base de datos si existe
-
+  debug('\n\nupdateOneOrder: ', data, '\n\n')
   // verifica que exista la orden
   try {
     const someOrder = await Order.findById(data._id)
@@ -439,21 +443,33 @@ async function searchProductsLocal(items) {
   }
 }
 
-async function removeFromInventory(fullProducts, soldProducts) {
+async function removeFromInventory(dbItems, items) {
   // construye un array de productos con inventario descontado y lo actualiza en db
-  const newFullProducts = fullProducts.map((product, index)=>{
-    const { disponibles, countPurchases } =product;
-    return {
-      ...product.toJSON(),
-      disponibles: disponibles-soldProducts[index].piezas,
-      countPurchases: countPurchases?countPurchases+1: 1
+  function buildUpdatedDBProducts(dbProducts, soldProducts) {
+    let updatedProducts = []
+    for (let i = 0; i < dbProducts.length; i++) {
+      const product = dbProducts[i].toJSON();
+      const { disponibles, countPurchases, _id } =product;
+
+      const soldIndex=searchProductByID(soldProducts, _id)
+      const { piezas } = soldProducts[soldIndex]
+
+      const newProduct = {
+        ...product,
+        disponibles: disponibles- piezas,
+        countPurchases: countPurchases?countPurchases+piezas: piezas
+      }
+      updatedProducts = [...updatedProducts, newProduct ]
     }
-  })
+    return updatedProducts;
+  }
+
+  const newdbProducts = buildUpdatedDBProducts(dbItems, items);
 
   try {
     // Buscar todos los productos de la lista y reducir inventario
     const dbUpdatedProducts = await Product.bulkWrite(
-      newFullProducts.map(product =>({
+      newdbProducts.map(product =>({
         updateOne: {
           filter: { _id: product._id },
           update: { $set: product }
@@ -492,12 +508,18 @@ function localOrderUtilityCalculator(data){
     totalCosto
   } = data
 
-  const productsCost = dbProducts.reduce((pila, product, index) => pila + (product.costo*items[index].piezas), 0);
-  const productsPrice = dbProducts.reduce((pila, product, index) => pila + (product.precioPlaza*items[index].piezas), 0);
+  let costo = 0;
+  let productsPrice = 0;
+  for (let i = 0; i < dbProducts.length; i++) {
+    const dbitem = dbProducts[i];
+    const itemIndex=searchProductByID(items, dbitem._id)
+    const item = itemIndex === null ? { piezas: 0 } : items[itemIndex]
+    productsPrice += (dbitem.precioPlaza*item.piezas)
+    costo += (dbitem.costo*item.piezas)
+  }
   const venta = cobroAdicional ? productsPrice + cobroAdicional.cantidad : productsPrice;
-  const costo = productsCost
 
-  // debug('venta: ', venta, ', costo: ', costo);
+  debug('venta: ', venta, ', costo: ', costo);
   if(totalVenta === venta && totalCosto === costo){
     return     {
       sumaMatch: true,
