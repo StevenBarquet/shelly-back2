@@ -18,7 +18,9 @@ async function wrapDBservice(res, callback, params) {
   const { internalError, result } = getSomething
   if(internalError){
     const { statusError } = result
-    res.status(statusError || 400).send(result)
+    const { errorType } = result
+    const genMessage = 'Error de operacion en el servidor'
+    res.status(statusError || 400).send({ ...result, errorType: errorType || genMessage })
   } else {
     res.send(result)
   }

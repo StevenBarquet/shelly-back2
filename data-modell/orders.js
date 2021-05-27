@@ -7,7 +7,7 @@ const orderSchema = new mongoose.Schema({
   correo: String,
   nombre: String,
   apellido: String,
-  telefono: Number,
+  telefono: String,
   rfc: String,
   domicilio: {
     nombre: String,
@@ -59,6 +59,7 @@ const orderSchema = new mongoose.Schema({
   estatus: { type: String, required: true },
   totalVenta: { type: Number, required: true },
   totalCosto: { type: Number, required: true },
+  utility: { type: mongoose.SchemaTypes.ObjectId, ref: 'Utility' },
   date: { type: Date, default: Date.now }
 });
 
@@ -133,7 +134,7 @@ function validateOrderLocal(order) {
   return schema.validate(order, { abortEarly: false })
 }
 
-function validateOrderLocalWithId(order) {
+function validateOrderWithId(order) {
   const schema = Joi.object({
     // Client Data (optional)
     _id: Joi.string().min(3).required(),
@@ -196,6 +197,7 @@ function validateOrderLocalWithId(order) {
     estatus: Joi.string().required(),
     totalVenta: Joi.number().required(),
     totalCosto: Joi.number().required(),
+    utility: Joi.string().required(),
     date: Joi.date().required()
   })
 
@@ -216,5 +218,5 @@ function validateProducts(order) {
 
 exports.Order = Order ;
 exports.validateOrderLocal = validateOrderLocal;
-exports.validateOrderLocalWithId = validateOrderLocalWithId;
+exports.validateOrderWithId = validateOrderWithId;
 exports.validateProducts = validateProducts;

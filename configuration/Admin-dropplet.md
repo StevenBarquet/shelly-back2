@@ -85,11 +85,11 @@ Run docker image with environment variables
     docker run -d --name [containerName] --env ENV_VAR=VALUE -p [port]:[port] nodejs-server-env
 
 ----------------------------------------------------------------
-    Steps for update backend
+-------------UPDATE PROD--------------------------
 
-log as root
-su - botz2
-cd /home/botz2/myFiles/shelly/
+ ssh root@134.122.112.35
+
+cd /home/botz/shelly-back2
 sudo git pull origin master
 docker container ls
 docker container rm -f shelly-back-container
@@ -97,9 +97,12 @@ docker image ls
 docker image rm -f shelly_back_image
 docker build -t shelly_back_image .
 docker image ls
-docker run --link shelly-mongo:mongo --name shelly-back2 --network shelly-network -p 4000:4000 -d shelly_back_image
+	docker run --network host --name shelly-back-container -p 4000:4000 -d --restart unless-stopped \
+    --mount type=bind,source=/etc/letsencrypt/live/shelly-store.com,target=/etc/letsencrypt/live/shelly-store.com \
+    --mount type=bind,source=/etc/letsencrypt/archive/shelly-store.com,target=/etc/letsencrypt/archive/shelly-store.com \
+    shelly_back_image
 docker container ls
-docker container logs shelly-back2-container
+docker container logs shelly-back-container
 
 check changes done in postman
 
@@ -110,7 +113,7 @@ docker run --name shelly-back2-container -p 4000:4000 -d shelly_back_image
 	docker run --network host --name shelly-back-container -p 4000:4000 -d shelly_back_image
 
 ## Not contenerized DB with localhost access and lets encrypt volume
-	docker run --network host --name shelly-back-container -p 4000:4000 -d \
+	docker run --network host --name shelly-back-container -p 4000:4000 -d --restart unless-stopped \
     --mount type=bind,source=/etc/letsencrypt/live/shelly-store.com,target=/etc/letsencrypt/live/shelly-store.com \
     --mount type=bind,source=/etc/letsencrypt/archive/shelly-store.com,target=/etc/letsencrypt/archive/shelly-store.com \
     shelly_back_image
@@ -118,11 +121,25 @@ docker run --name shelly-back2-container -p 4000:4000 -d shelly_back_image
 ## Logs	
 docker container logs shelly-back-container
 
+----------------------------------------------------------------
+-------------UPDATE LOCAL--------------------------
 
-Other:
+cd /home/botz/Documents/A_Programing/shelly-back2
+git status
+git add .
+git commit -m "app changes"
+git push -u origin master
+docker container ls
+docker container rm -f shelly-back-container
+docker image ls
+docker image rm -f shelly_back_image
+docker build -t shelly_back_image .
+docker image ls
+	docker run --network host --name shelly-back-container -p 4000:4000 -d --restart unless-stopped --env DEBUG=app:* --env USE_SSL=  \
+    shelly_back_image
+docker container ls
+docker container logs shelly-back-container
 
-docker build -t ssl-example/image .
-docker run --name SSL-example-container -p 5001:5001 -d ssl-example/image  
 ----------------------------------------------------------------
     Create and connect network 
 

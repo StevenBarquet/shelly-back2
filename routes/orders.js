@@ -3,7 +3,7 @@
 const express = require('express');
 const debug=require('debug')('app:test')
 // Others
-const { Order, validateOrderLocal, validateOrderLocalWithId } = require('../data-modell/orders');
+const { Order, validateOrderLocal, validateOrderWithId } = require('../data-modell/orders');
 const { Utility } = require('../data-modell/utility');
 const { Product } = require('../data-modell/product');
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
@@ -38,7 +38,7 @@ router.post('/ventaLocal', async (req, res)=>{
 router.put('/editar', (req, res)=>{
   debug('requested for: ', req.originalUrl)
 
-  const validateBody = validateOrderLocalWithId(req.body)
+  const validateBody = validateOrderWithId(req.body)
   joiCheck(res, validateBody);
 
   wrapDBservice(res, updateOneOrder, req.body);
@@ -52,6 +52,16 @@ router.delete('/borrar/:id', (req, res)=>{
   checkParams(res, id, isId)
 
   wrapDBservice(res, deleteOneOrder, id);
+})
+
+// ------Cancel One------------
+router.delete('/cancelar/:id', (req, res)=>{
+  debug('requested for: ', req.originalUrl)
+
+  const { id } = req.params
+  checkParams(res, id, isId)
+
+  wrapDBservice(res, cancelOneOrder, id);
 })
 
 // Valida que sean productos de una orden validos
@@ -109,7 +119,7 @@ async function getOneOrder(id) {
     debug('------getOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al traer orden de DB', statusError: 404 }
     };
   }
 }
@@ -135,6 +145,13 @@ async function createLocalOrder(data){
     return utilityDBresponse
   }
 
+  // --Agregar id de utilidad a orden
+  const updateResponse = await updateOneOrder({ ...newOrder, utility: utilityDBresponse._id });
+  if(updateResponse.internalError){
+    debug('------createLocalOrder-----\nError al agregar utilidad id a orden\n\n', utilityDBresponse.result);
+    return utilityDBresponse
+  }
+
   // --Remover inventario vendido en DB y hacer incremento de contador de venta por producto
   const removeInvresponse = await removeFromInventory(dbProducts, items);
   if(removeInvresponse.internalError){
@@ -156,14 +173,6 @@ async function createLocalOrder(data){
 async function updateOneOrder(data) {
   // Actualiza una orden en la base de datos si existe
 
-  // Valida que todos los productos existan
-  const dbProducts= await searchProductsLocal(data.items);
-  if(dbProducts.length === 0 || dbProducts.length !== data.items.length)
-    return(
-      { internalError: true,
-        result: { errorType: 'Productos no encontrados', productosValidos: dbProducts || [] }
-      })
-
   // verifica que exista la orden
   try {
     const someOrder = await Order.findById(data._id)
@@ -176,14 +185,14 @@ async function updateOneOrder(data) {
       debug('------updateOneOrder-----\nsuccess\n', result);
       return {
         internalError: false,
-        result: { status: 'success' }
+        result: { status: 'success', result }
       };
     } catch (error) {
       // retorna error si no pudiste hacer update
       debug('------updateOneOrder----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 500 }
+        result: { ...error,  errorType: 'Error al crear actualizar orden', statusError: 401 }
       }
     }
   } catch (error) {
@@ -191,7 +200,7 @@ async function updateOneOrder(data) {
     debug('------updateOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al actualizar, id no valido', statusError: 401 }
     };
 
   }
@@ -215,7 +224,7 @@ async function deleteOneOrder(id) {
       debug('------deleteOneOrder----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error, statusError: 401 }
+        result: { ...error,  errorType: 'Error al intentar borrar orden en DB', statusError: 401 }
       }
     }
   } catch (error) {
@@ -223,7 +232,60 @@ async function deleteOneOrder(id) {
     debug('------deleteOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 404 }
+      result: { ...error, errorType: 'Error al actualizar, id no valido', statusError: 404 }
+    };
+  }
+}
+
+async function cancelOneOrder(id) {
+  // Elimina un producto en la base de datos si existe
+  try {
+    // verifica que exista el producto
+    const someOrder = await Order.findById(id);
+
+    // Actualizar estatus
+    updateOneOrder({ ...someOrder, estatus: 'cancelado' })
+
+    // Actualizar estatus
+    deleteOneUtility(someOrder.utility)
+
+  } catch (error) {
+    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+    debug('------deleteOneOrder-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, errorType: 'Error al actualizar, id no valido', statusError: 404 }
+    };
+  }
+}
+
+async function deleteOneUtility(id) {
+  // Elimina un producto en la base de datos si existe
+  try {
+    // verifica que exista el producto
+    await Utility.findById(id);
+    try {
+      // si existe intenta hacer el DELETE
+      const result = await Utility.deleteOne({ _id: id })
+      debug('------deleteOneUtility-----\nsuccess\n', result);
+      return {
+        internalError: false,
+        result: { status: 'success' }
+      }
+    } catch (error) {
+      // retorna error si no pudiste hacer DELETE
+      debug('------deleteOneUtility----\nInternal error\n\n', error);
+      return {
+        internalError: true,
+        result: { ...error,  errorType: 'Error al intentar borrar utilidad en DB', statusError: 401 }
+      }
+    }
+  } catch (error) {
+    // retorna error si no pudiste hacer busqueda de utility por id no encontrado
+    debug('------deleteOneUtility-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, errorType: 'Error id de utilidad no valido', statusError: 404 }
     };
   }
 }
@@ -251,7 +313,7 @@ async function getAllOrdersPaginated(params) {
     debug('------getAllOrdersPaginated-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al traer ordenes de DB', statusError: 401 }
     }
   }
 }
@@ -300,7 +362,7 @@ async function searchOrders(data) {
     debug('------searchOrders-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 500 }
+      result: { ...error, errorType: 'Error al buscar ordenes en DB', statusError: 500 }
     }
   }
 }
@@ -389,6 +451,7 @@ async function removeFromInventory(fullProducts, soldProducts) {
   })
 
   try {
+    // Buscar todos los productos de la lista y reducir inventario
     const dbUpdatedProducts = await Product.bulkWrite(
       newFullProducts.map(product =>({
         updateOne: {
@@ -406,7 +469,7 @@ async function removeFromInventory(fullProducts, soldProducts) {
     debug('------removeFromInventory-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 401 }
+      result: { ...error, errorType: 'Error al intentar actualizar inventario en DB', statusError: 401 }
     }
   }
 }
@@ -464,7 +527,7 @@ async function createAnyOrder(data){
     debug('------createAnyOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 401 }
+      result: { ...error, errorType: 'Error al crear orden', statusError: 401 }
     }
   }
 }
@@ -483,7 +546,7 @@ async function createAnyUtility(data){
     debug('------createAnyUtility-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error, statusError: 401 }
+      result: { ...error, errorType: 'Error al crear utilidad', statusError: 401 }
     }
   }
 }
