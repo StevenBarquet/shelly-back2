@@ -27,7 +27,7 @@ const orderSchema = new mongoose.Schema({
   },
   // Products Data (optional)
   items : [{
-    categoria: String,
+    categoria: [String],
     nombre: String,
     piezas: Number,
     disponibles: Number,
@@ -93,7 +93,7 @@ function validateOrderLocal(order) {
     // Products Data (optional)
     items : Joi.array().items(
       Joi.object({
-        categoria: Joi.string(),
+        categoria: Joi.array().items(Joi.string()),
         nombre: Joi.string(),
         piezas: Joi.number().integer(),
         disponibles: Joi.number().integer().required(),
@@ -161,7 +161,7 @@ function validateOrderWithId(order) {
     // Products Data (optional)
     items : Joi.array().items(
       Joi.object({
-        categoria: Joi.string(),
+        categoria: Joi.array().items(Joi.string()),
         nombre: Joi.string(),
         piezas: Joi.number().integer(),
         disponibles: Joi.number().integer().required(),

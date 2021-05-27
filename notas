@@ -12,7 +12,8 @@
 	-servicio de cancelar orden
 	-cambiar tipo de dato de telefono a string en db pero castearlo en front
 -Agregar tamaño volumétrico (para calcular costos de envío por paquetería)
--Base de datos con tienda config (reglas de envío, métodos de envío)
+-Base de datos con tienda config (reglas de envío, métodos de envío, activar, desactivar notificaciones + reglas)
+-Considerar meter las categorías en base de datos de la tienda
 
 	Smurfeado:
 -Permitir orden sin productos pero on cobro adicional
