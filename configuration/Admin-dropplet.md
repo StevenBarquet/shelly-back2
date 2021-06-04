@@ -104,6 +104,26 @@ docker image ls
 docker container ls
 docker container logs shelly-back-container
 
+-------------UPDATE PROD NEECHAN--------------------------
+
+ ssh root@143.198.161.97
+
+cd /home/botz/shelly-back2
+sudo git pull origin master
+docker container ls
+docker container rm -f shelly-back-container
+docker image ls
+docker image rm -f shelly_back_image
+docker build -t shelly_back_image .
+docker image ls
+	docker run --network host --name shelly-back-container --env SSL_PATH=/etc/letsencrypt/live/copiadorasqueen.com -p 4000:4000 -d --restart unless-stopped \
+    --mount type=bind,source=/etc/letsencrypt/live/copiadorasqueen.com,target=/etc/letsencrypt/live/copiadorasqueen.com \
+    --mount type=bind,source=/etc/letsencrypt/archive/copiadorasqueen.com,target=/etc/letsencrypt/archive/copiadorasqueen.com \
+    shelly_back_image
+docker container ls
+docker container logs shelly-back-container
+
+
 check changes done in postman
 
 ## Not contenerized DB

@@ -4,7 +4,6 @@ const express = require('express');
 const debug=require('debug')('app:test')
 // Others
 const { Order, validateOrderLocal, validateOrderWithId } = require('../data-modell/orders');
-const { Utility } = require('../data-modell/utility');
 const { Product } = require('../data-modell/product');
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 const { validatePagination, validateSearchOrders, isId } = require('../data-modell/otherValidators')
@@ -12,10 +11,7 @@ const { searchProductByID } = require('../others/otherMethods')
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
-// const costoEnvio = 198;
-// const envioGratisDesde = 1998
-
-// ---------------------------------------------------ROUTES---------------------------------------------
+// const costoEnvio = 198;    if(orderResponse.internalError) -------------ROUTES---------------------------------------------
 // ------Create One------------
 router.post('/ventaLocal', async (req, res)=>{
   debug('requested from: ', req.url)
@@ -129,31 +125,13 @@ async function createLocalOrder(data){
   // Crea una orden local, registra su utilidad y elimina inventario de los productos vendidos
   const { utility, dbProducts, items, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
   const { totalVenta, totalCosto, utilidad } = utility
-  const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
+  const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, utility: utilidad, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
 
   // --Registrar Orden en DB
   const newOrder = await createAnyOrder(orderData)
   if(newOrder.internalError){
     debug('------createLocalOrder-----\nError al crear orden\n\n', newOrder.result);
     return newOrder
-  }
-
-  const newOrdeData = newOrder.result.data.toJSON()
-
-  // --Registrar Utilidad en DB
-  const utilityData = { idOrden: newOrdeData._id, utilidad, metodoPago, totalVenta, totalCosto }
-  const utilityDBresponse = await createAnyUtility(utilityData)
-  if(utilityDBresponse.internalError){
-    debug('------createLocalOrder-----\nError al registrar utilidad\n\n', utilityDBresponse.result);
-    return utilityDBresponse
-  }
-
-  const utilityDataDB = utilityDBresponse.result.data.toJSON()
-  // --Agregar id de utilidad a orden
-  const updateResponse = await updateOneOrder({ ...newOrdeData, utility: utilityDataDB._id });
-  if(updateResponse.internalError){
-    debug('------createLocalOrder-----\nError al agregar utilidad id a orden\n\n', utilityDBresponse.result);
-    return utilityDBresponse
   }
 
   // --Remover inventario vendido en DB y hacer incremento de contador de venta por producto
@@ -248,49 +226,14 @@ async function cancelOneOrder(id) {
     let someOrder = await Order.findById(id);
     someOrder=someOrder.toJSON()
     // Actualizar estatus
-    const orderResponse = await updateOneOrder({ ...someOrder, estatus: 'Cancelado' })
-    if(orderResponse.internalError) return orderResponse
-    // Actualizar estatus
-    const utilityResponse = await deleteOneUtility(someOrder.utility)
-    return utilityResponse
-
+    const orderResponse = await updateOneOrder({ ...someOrder, estatus: 'Cancelado', utility: 0 })
+    return orderResponse
   } catch (error) {
     // retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------deleteOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, errorType: 'Error al actualizar, id no valido', statusError: 404 }
-    };
-  }
-}
-
-async function deleteOneUtility(id) {
-  // Elimina un producto en la base de datos si existe
-  try {
-    // verifica que exista el producto
-    await Utility.findById(id);
-    try {
-      // si existe intenta hacer el DELETE
-      const result = await Utility.deleteOne({ _id: id })
-      debug('------deleteOneUtility-----\nsuccess\n', result);
-      return {
-        internalError: false,
-        result: { status: 'success' }
-      }
-    } catch (error) {
-      // retorna error si no pudiste hacer DELETE
-      debug('------deleteOneUtility----\nInternal error\n\n', error);
-      return {
-        internalError: true,
-        result: { ...error,  errorType: 'Error al intentar borrar utilidad en DB', statusError: 401 }
-      }
-    }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda de utility por id no encontrado
-    debug('------deleteOneUtility-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, errorType: 'Error id de utilidad no valido', statusError: 404 }
     };
   }
 }
@@ -551,25 +494,6 @@ async function createAnyOrder(data){
     return {
       internalError: true,
       result: { ...error, errorType: 'Error al crear orden', statusError: 401 }
-    }
-  }
-}
-
-async function createAnyUtility(data){
-  // registra nueva utilidad en db
-  const utilidad = new Utility(data);
-  try {
-    const newUtility = await  utilidad.save();
-    debug('------createAnyUtility-----\nsuccess\n', newUtility);
-    return {
-      internalError: false,
-      result: { status: 'success', data: newUtility }
-    }
-  } catch (error) {
-    debug('------createAnyUtility-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, errorType: 'Error al crear utilidad', statusError: 401 }
     }
   }
 }

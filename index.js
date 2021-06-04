@@ -11,6 +11,7 @@ const productClientRoutes = require('./routes/productsClient')
 const homeServicesRoutes = require('./routes/home')
 const orderRoutes = require('./routes/orders')
 const analyticsRoutes = require('./routes/analytics')
+const utilitiesRoutes = require('./routes/utilities')
 // Otros
 const startLogs= require('./configuration/startLogs')
 const mongoConnect= require('./configuration/mongoConfig')
@@ -35,6 +36,7 @@ app.use('/client/productos/', productClientRoutes)
 app.use('/homeServices/', homeServicesRoutes)
 app.use('/ordenes/', orderRoutes)
 app.use('/analytics/', analyticsRoutes)
+app.use('/utilities/', utilitiesRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');

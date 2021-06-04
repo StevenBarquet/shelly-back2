@@ -59,7 +59,7 @@ const orderSchema = new mongoose.Schema({
   estatus: { type: String, required: true },
   totalVenta: { type: Number, required: true },
   totalCosto: { type: Number, required: true },
-  utility: { type: mongoose.SchemaTypes.ObjectId, ref: 'Utility' },
+  utility: { type: Number, required: true },
   date: { type: Date, default: Date.now }
 });
 
@@ -197,7 +197,7 @@ function validateOrderWithId(order) {
     estatus: Joi.string().required(),
     totalVenta: Joi.number().required(),
     totalCosto: Joi.number().required(),
-    utility: Joi.string().required(),
+    utility: Joi.number().required(),
     date: Joi.date().required()
   })
 
