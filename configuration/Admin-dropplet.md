@@ -87,7 +87,7 @@ Run docker image with environment variables
 ----------------------------------------------------------------
 -------------UPDATE PROD--------------------------
 
- ssh root@134.122.112.35
+ ssh botz@134.122.112.35
 
 cd /home/botz/shelly-back2
 sudo git pull origin master
