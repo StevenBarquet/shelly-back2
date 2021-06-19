@@ -1,15 +1,15 @@
 const config = require('config');
 const mongoose = require('mongoose');
-const debugProd=require('debug')('app:prod')
+const debugProd = require('debug')('app:prod')
 
 async function mongoConnect(){
   // Mongo conect to base
   try {
-    await mongoose.connect(config.get('mongoDB'), { useNewUrlParser: true, useFindAndModify:true, useUnifiedTopology: true }) // return a promise
+    await mongoose.connect(config.get('mongoDB'), { useNewUrlParser: true, useFindAndModify: true, useUnifiedTopology: true }) // Return a promise
     debugProd(`Conected to ${config.get('mongoDB')}...`)
-  } catch (err) {
+  } catch (err){
     debugProd('Couldnt connect because:\n', err)
-  }finally {
+  } finally {
     debugProd('Connection finished...')
   }
 }

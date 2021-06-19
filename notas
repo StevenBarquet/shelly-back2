@@ -1,5 +1,9 @@
 	Pendiente
-
+-Ordenar productos por fecha en filtros y modificar la fecha con la actual al hacer update de producto
+-To lower case all mails
+-Fix all joiChecks and validateId
+-Modificar update para sólo actualizar campos recibidos
+-Validar regex correo en usuarios
 -Agregar campo de parrafo a los banners
 -Agregar servicio de blogs
 -Generar Folio de orden (checar)

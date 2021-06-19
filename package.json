@@ -24,6 +24,7 @@
     "prettier": "^2.2.1"
   },
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "config": "^3.3.6",
     "cors": "^2.8.5",
     "debug": "^4.3.1",
