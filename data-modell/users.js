@@ -27,7 +27,8 @@ function validateUser(user){
   const schema = Joi.object({
     authorizedRoutes: Joi.array().items(
       Joi.string()
-    ),
+    )
+      .required(),
     mail: Joi.string().min(5)
       .required(),
     pass: Joi.string().min(6)
@@ -39,8 +40,25 @@ function validateUser(user){
     phone: Joi.string(),
     otherPhone: Joi.string(),
     adress: Joi.string(),
-    docsUrl: Joi.string(),
-    // Other
+    docsUrl: Joi.string()
+  })
+
+  return schema.validate(user)
+}
+
+function validateSupportUser(user){
+  const schema = Joi.object({
+    authorizedRoutes: Joi.array().items(
+      Joi.string()
+    )
+      .required(),
+    mail: Joi.string().min(5)
+      .required(),
+    pass: Joi.string().min(6)
+      .required(),
+    fullName: Joi.string().min(5)
+      .required(),
+    // Perfil
     isSupport: Joi.boolean()
   })
 
@@ -51,12 +69,11 @@ function validateUserWithID(user){
   const schema = Joi.object({
     _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/u)
       .required(),
-    mail: Joi.string().min(5)
-      .required(),
-    pass: Joi.string().min(6)
-      .required(),
-    fullName: Joi.string().min(5)
-      .required(),
+    authorizedRoutes: Joi.array().items(
+      Joi.string()
+    ),
+    mail: Joi.string().min(5),
+    fullName: Joi.string().min(5),
     // Perfil
     rfc: Joi.string(),
     phone: Joi.string(),
@@ -72,4 +89,5 @@ function validateUserWithID(user){
 
 exports.User = User;
 exports.validateUser = validateUser;
+exports.validateSupportUser = validateSupportUser;
 exports.validateUserWithID = validateUserWithID;

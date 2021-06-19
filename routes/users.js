@@ -50,10 +50,10 @@ router.put('/editar', (req, res) => {
 })
 
 // ------Delete One------------
-router.delete('/borrar/:id', (req, res) => {
+router.delete('/borrar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
-  const { id } = req.params
+  const { id } = req.body
   if (checkParams(res, id, isId)){
     wrapDBservice(res, deleteOneUsers, id);
   }
@@ -105,11 +105,17 @@ async function createOneUser(data){
 async function getAllUsers(){
 // Trae todos los productos de la base de datos
   try {
-    const users = await User.find({ isSupport: { $exists: false } });
+    const publicFields = {
+      _id: 1,
+      authorizedRoutes: 1,
+      mail: 1,
+      fullName: 1
+    }
+    const users = await User.find({ isSupport: { $exists: false } }).select(publicFields);
     debug('------getAllusers-----\nsuccess\n', users);
     return {
       internalError: false,
-      result: users
+      result: { status: 'success', users }
     };
   } catch (error){
     debug('------getAllusers-----\nInternal error\n\n', error);
@@ -123,7 +129,8 @@ async function getAllUsers(){
 async function getOneUser(id){
 // Trae un producto de la base de datos
   try {
-    const someUser = await User.findById(id)
+    const publicFields = { _id: 1, authorizedRoutes: 1, mail: 1, fullName: 1, rfc: 1, phone: 1, otherPhone: 1, adress: 1, docsUrl: 1 }
+    const someUser = await User.findById(id).select(publicFields)
     debug('------getOneUser-----\nsuccess\n', someUser);
     return {
       internalError: false,
@@ -146,6 +153,7 @@ async function updateOneUser(data){
     try {
       // Si existe intenta hacer update del producto
       someUser.set({
+        ...someUser,
         ...data
       })
       const result = await someUser.save();
