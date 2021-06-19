@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
 const express = require('express');
@@ -15,27 +16,27 @@ router.put('/visitsCounter/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
-
-  wrapDBservice(res, updateSomeCount, { id, incrValue: { countVisits: 1 } });
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, updateSomeCount, { id, incrValue: { countVisits: 1 } });
+  }
 })
 // ------Counter Update Questions------------
 router.put('/questionCounter/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
-
-  wrapDBservice(res, updateSomeCount, { id, incrValue: { countQuestions: 1 } });
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, updateSomeCount, { id, incrValue: { countQuestions: 1 } });
+  }
 })
 // ------Counter Update Purchases------------
 router.put('/purchasesCounter/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
-
-  wrapDBservice(res, updateSomeCount, { id, incrValue: { countPurchases: 1 } });
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, updateSomeCount, { id, incrValue: { countPurchases: 1 } });
+  }
 })
 
 // -------------------------------------------------QUERYS-----------------------------------------

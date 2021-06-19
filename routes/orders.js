@@ -1,7 +1,8 @@
+/* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
 const express = require('express');
-const debug=require('debug')('app:test')
+const debug = require('debug')('app:test')
 // Others
 const { Order, validateOrderLocal, validateOrderWithId } = require('../data-modell/orders');
 const { Product } = require('../data-modell/product');
@@ -11,19 +12,19 @@ const { searchProductByID } = require('../others/otherMethods')
 
 const router = express.Router();
 // ---------------------------------------------------CONFIGURATIONS-------------------------------------
-// const costoEnvio = 198;    if(orderResponse.internalError) -------------ROUTES---------------------------------------------
+// Const costoEnvio = 198;    if(orderResponse.internalError) -------------ROUTES---------------------------------------------
 // ------Create One------------
-router.post('/ventaLocal', async (req, res)=>{
+router.post('/ventaLocal', async(req, res) => {
   debug('requested from: ', req.url)
 
   const validateBody = validateOrderLocal(req.body)
   joiCheck(res, validateBody);
 
   const { internalError, result } = await validateProductsDB(req.body);
-  if(internalError){
+  if (internalError){
     debug('Error: ', result.errorType)
     res.status(400).send({ internalError, result })
-  } else{
+  } else {
     // Si la lista de productos de la orden es válida
     const { dbProducts, utility } = result;
     wrapDBservice(res, createLocalOrder, { ...req.body, dbProducts, utility });
@@ -32,7 +33,7 @@ router.post('/ventaLocal', async (req, res)=>{
 })
 
 // ------Update One------------
-router.put('/editar', (req, res)=>{
+router.put('/editar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateOrderWithId(req.body)
@@ -42,7 +43,7 @@ router.put('/editar', (req, res)=>{
 })
 
 // ------Delete One------------
-router.delete('/borrar/:id', (req, res)=>{
+router.delete('/borrar/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
@@ -52,7 +53,7 @@ router.delete('/borrar/:id', (req, res)=>{
 })
 
 // ------Cancel One------------
-router.delete('/cancelar/:id', (req, res)=>{
+router.delete('/cancelar/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
@@ -62,7 +63,7 @@ router.delete('/cancelar/:id', (req, res)=>{
 })
 
 // Valida que sean productos de una orden validos
-router.post('/verifyProducts', (req, res)=>{
+router.post('/verifyProducts', (req, res) => {
   debug('requested from: ', req.url)
 
   const validateBody = validateOrderLocal(req.body)
@@ -72,37 +73,39 @@ router.post('/verifyProducts', (req, res)=>{
 })
 
 // ----- Read One -------
-router.get('/:id', (req, res)=>{
+router.get('/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
-
-  wrapDBservice(res, getOneOrder, id);
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, getOneOrder, id);
+  }
 })
 
 // ------Get all paginated------------
-router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
+router.get('/todos/:pageNumber/:pageSize', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validatePagination(req.params)
-  joiCheck(res, validateBody);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, getAllOrdersPaginated, req.params);
+  }
 
-  wrapDBservice(res, getAllOrdersPaginated, req.params);
 })
 
 // ------Get products search------------
-router.post('/buscar', (req, res)=>{
+router.post('/buscar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateSearchOrders(req.body)
-  joiCheck(res, validateBody);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, searchOrders, req.body);
+  }
 
-  wrapDBservice(res, searchOrders, req.body);
 })
 
 // ----------------------------------------------MAIN METHODS---------------------------------------
-async function getOneOrder(id) {
+async function getOneOrder(id){
   // Trae un producto de la base de datos
   try {
     const someOrder = await Order.findById(id)
@@ -111,8 +114,8 @@ async function getOneOrder(id) {
       internalError: false,
       result: someOrder
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------getOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -123,20 +126,20 @@ async function getOneOrder(id) {
 
 async function createLocalOrder(data){
   // Crea una orden local, registra su utilidad y elimina inventario de los productos vendidos
-  const { utility, dbProducts, items, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
+  const { utility, dbProducts, items, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, /* Opcionales -> */ notaVenta, envio, domicilio, cobroAdicional } = data
   const { totalVenta, totalCosto, utilidad } = utility
-  const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, utility: utilidad, /* opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
+  const orderData = { items, totalVenta, totalCosto, correo, nombre, apellido, telefono, ventaTipo, responsableVenta, metodoPago, estatus, utility: utilidad, /* Opcionales -> */ notaVenta, envio, domicilio, cobroAdicional }
 
   // --Registrar Orden en DB
   const newOrder = await createAnyOrder(orderData)
-  if(newOrder.internalError){
+  if (newOrder.internalError){
     debug('------createLocalOrder-----\nError al crear orden\n\n', newOrder.result);
     return newOrder
   }
 
   // --Remover inventario vendido en DB y hacer incremento de contador de venta por producto
   const removeInvresponse = await removeFromInventory(dbProducts, items);
-  if(removeInvresponse.internalError){
+  if (removeInvresponse.internalError){
     debug('------createLocalOrder-----\nError al remover stock del inventario\n\n', removeInvresponse.result);
     return removeInvresponse
   }
@@ -147,19 +150,19 @@ async function createLocalOrder(data){
     internalError: false,
     result: {
       status: 'success'
-      // data: newOrder
+      // Data: newOrder
     }
   };
 }
 
-async function updateOneOrder(data) {
+async function updateOneOrder(data){
   // Actualiza una orden en la base de datos si existe
   debug('\n\nupdateOneOrder: ', data, '\n\n')
-  // verifica que exista la orden
+  // Verifica que exista la orden
   try {
     const someOrder = await Order.findById(data._id)
     try {
-      // si existe intenta hacer update de la orden
+      // Si existe intenta hacer update de la orden
       someOrder.set({
         ...data
       })
@@ -169,16 +172,16 @@ async function updateOneOrder(data) {
         internalError: false,
         result: { status: 'success', result }
       };
-    } catch (error) {
-      // retorna error si no pudiste hacer update
+    } catch (error){
+      // Retorna error si no pudiste hacer update
       debug('------updateOneOrder----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error,  errorType: 'Error al crear actualizar orden', statusError: 401 }
+        result: { ...error, errorType: 'Error al crear actualizar orden', statusError: 401 }
       }
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda de la orden por id no valido
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda de la orden por id no valido
     debug('------updateOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -188,29 +191,29 @@ async function updateOneOrder(data) {
   }
 }
 
-async function deleteOneOrder(id) {
+async function deleteOneOrder(id){
   // Elimina un producto en la base de datos si existe
   try {
-    // verifica que exista el producto
+    // Verifica que exista el producto
     await Order.findById(id);
     try {
-      // si existe intenta hacer el DELETE
+      // Si existe intenta hacer el DELETE
       const result = await Order.deleteOne({ _id: id })
       debug('------deleteOneOrder-----\nsuccess\n', result);
       return {
         internalError: false,
         result: { status: 'success' }
       }
-    } catch (error) {
-      // retorna error si no pudiste hacer DELETE
+    } catch (error){
+      // Retorna error si no pudiste hacer DELETE
       debug('------deleteOneOrder----\nInternal error\n\n', error);
       return {
         internalError: true,
-        result: { ...error,  errorType: 'Error al intentar borrar orden en DB', statusError: 401 }
+        result: { ...error, errorType: 'Error al intentar borrar orden en DB', statusError: 401 }
       }
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------deleteOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -219,17 +222,17 @@ async function deleteOneOrder(id) {
   }
 }
 
-async function cancelOneOrder(id) {
+async function cancelOneOrder(id){
   // Elimina un producto en la base de datos si existe
   try {
-    // verifica que exista el producto
+    // Verifica que exista el producto
     let someOrder = await Order.findById(id);
-    someOrder=someOrder.toJSON()
+    someOrder = someOrder.toJSON()
     // Actualizar estatus
     const orderResponse = await updateOneOrder({ ...someOrder, estatus: 'Cancelado', utility: 0 })
     return orderResponse
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------deleteOneOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -238,18 +241,17 @@ async function cancelOneOrder(id) {
   }
 }
 
-async function getAllOrdersPaginated(params) {
+async function getAllOrdersPaginated(params){
   // Trae todos los productos de la base de datos paginado
   const { pageNumber, pageSize } = params;
-  const pageNumberInt = parseInt(pageNumber);
-  const pageSizeInt = parseInt(pageSize);
+  const pageNumberInt = parseInt(pageNumber, 10);
+  const pageSizeInt = parseInt(pageSize, 10);
   try {
     const order = await Order
       .find()
       .sort({ date: 1 })
-      .skip((pageNumberInt-1) *  pageSizeInt)
-      .limit(pageSizeInt)
-    ;
+      .skip((pageNumberInt - 1) * pageSizeInt)
+      .limit(pageSizeInt);
     const orderCount = await Order.find().countDocuments();
 
     debug('------getAllOrdersPaginated-----\nsuccess\n', order);
@@ -257,7 +259,7 @@ async function getAllOrdersPaginated(params) {
       internalError: false,
       result: { orderCount, order }
     };
-  } catch (error) {
+  } catch (error){
     debug('------getAllOrdersPaginated-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -266,21 +268,21 @@ async function getAllOrdersPaginated(params) {
   }
 }
 
-async function searchOrders(data) {
+async function searchOrders(data){
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
-  const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
+  const regEx = new RegExp(`.*${searchedValue}.*`, 'iu')
   const fixFilters = cleanDateTimeFilters(filters)
   const sortOrder = sortBy || { date: 1 }
-  let orders; let orderCount;
+  let orders = []; let orderCount = 0;
 
   try {
-    if(searchedValue){
+    if (searchedValue){
       orders = await Order
         .find(fixFilters)
         .sort(sortOrder)
         .or([{ nombre: regEx }, { apellido: regEx }, { telefono: regEx }, { ventaTipo: regEx }, { responsableVenta: regEx }, { metodoPago: regEx }, { notaVenta: regEx }, { estatus: regEx }])
-        .skip((pageNumber-1) *  pageSize)
+        .skip((pageNumber - 1) * pageSize)
         .limit(pageSize);
 
       orderCount = await Order
@@ -288,11 +290,11 @@ async function searchOrders(data) {
         .sort(sortOrder)
         .or([{ apellido: regEx }, { telefono: regEx }, { ventaTipo: regEx }, { responsableVenta: regEx }, { metodoPago: regEx }, { notaVenta: regEx }, { estatus: regEx }])
         .countDocuments();
-    } else{
+    } else {
       orders = await Order
         .find(fixFilters)
         .sort(sortOrder)
-        .skip((pageNumber-1) *  pageSize)
+        .skip((pageNumber - 1) * pageSize)
         .limit(pageSize);
 
       orderCount = await Order
@@ -306,7 +308,7 @@ async function searchOrders(data) {
       internalError: false,
       result: { orderCount, orders }
     };
-  } catch (error) {
+  } catch (error){
     debug('------searchOrders-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -315,54 +317,58 @@ async function searchOrders(data) {
   }
 }
 
-async function validateProductsDB(data) {
+async function validateProductsDB(data){
   // Valida si la lista de productos existen, son válidos en la db y los costos y precios coincidan
   const products = data.items
   const { cobroAdicional } = data
 
   // Case: No hay productos pero si hay cobro adicional
-  if(products.length === 0 && cobroAdicional && cobroAdicional.cantidad > 0){
-    const utilityAdicional= {
+  if (products.length === 0 && cobroAdicional && cobroAdicional.cantidad > 0){
+    const utilityAdicional = {
       totalVenta: cobroAdicional.cantidad,
       totalCosto: 0,
       utilidad: cobroAdicional.cantidad
     }
-    return(
+    return (
       { internalError: false,
         result: { status: 'success', onlyCobroAdicional: true, dbProducts: [], utility: utilityAdicional }
       })
   }
 
   // Case: No hay productos ni cobro adicional
-  if(products.length < 1)
-    return(
+  if (products.length < 1){
+    return (
       { internalError: true,
         result: { errorType: 'Sin productos o cobro adicional no se puede registrar orden', products }
       })
+  }
 
   // Case: Si hay productos pero ya no estan disponibles en DB
-  const dbProducts= await searchProductsLocal(products);
-  if(dbProducts.length === 0 || dbProducts.length !== products.length)
-    return(
+  const dbProducts = await searchProductsLocal(products);
+  if (dbProducts.length === 0 || dbProducts.length !== products.length){
+    return (
       { internalError: true,
         result: { errorType: 'Productos no encontrados', productosValidos: dbProducts || [] }
       })
+  }
 
   // Case: Si hay productos pero no hay stock de las piezas solicitadas
-  const piezas= piezasVSdisponibles(products, dbProducts);
-  if(piezas.length !== 0)
-    return(
+  const piezas = piezasVSdisponibles(products, dbProducts);
+  if (piezas.length !== 0){
+    return (
       { internalError: true,
         result: { errorType: 'Productos con piezas no disponibles', productosError: piezas }
       })
+  }
 
   // Case: Los precios o costos no coinciden en DB
   const { sumaMatch, utility } = localOrderUtilityCalculator({ ...data, dbProducts });
-  if(!sumaMatch)
-    return(
+  if (!sumaMatch){
+    return (
       { internalError: true,
         result: { errorType: 'El precio o costo de los productos no coincide con DB', productosValidos: dbProducts }
       })
+  }
 
   // Case: Exito
   return (
@@ -373,37 +379,37 @@ async function validateProductsDB(data) {
   )
 }
 // -------------------------------------------------METHODS-----------------------------------------
-async function searchProductsLocal(items) {
-  // valida que un array de productos coincida en DB y retorna la lista desde la DB
+async function searchProductsLocal(items){
+  // Valida que un array de productos coincida en DB y retorna la lista desde la DB
   const itemsIDs = items.map(item => item._id);
   try {
     // Verifica que existan los productos de la orden
     const someProducts = await Product
       .find({ _id: { $in: itemsIDs }, disponibles: { $gt: 0 } })
     return someProducts
-  } catch (error) {
+  } catch (error){
     debug('------No se encontraron los IDs de los productos-----\nInternal error\n\n', error);
     return []
   }
 }
 
-async function removeFromInventory(dbItems, items) {
-  // construye un array de productos con inventario descontado y lo actualiza en db
-  function buildUpdatedDBProducts(dbProducts, soldProducts) {
+async function removeFromInventory(dbItems, items){
+  // Construye un array de productos con inventario descontado y lo actualiza en db
+  function buildUpdatedDBProducts(dbProducts, soldProducts){
     let updatedProducts = []
-    for (let i = 0; i < dbProducts.length; i++) {
-      const product = dbProducts[i].toJSON();
-      const { disponibles, countPurchases, _id } =product;
+    for (let index = 0; index < dbProducts.length; index++){
+      const product = dbProducts[index].toJSON();
+      const { disponibles, countPurchases, _id } = product;
 
-      const soldIndex=searchProductByID(soldProducts, _id)
+      const soldIndex = searchProductByID(soldProducts, _id)
       const { piezas } = soldProducts[soldIndex]
 
       const newProduct = {
         ...product,
-        disponibles: disponibles- piezas,
-        countPurchases: countPurchases?countPurchases+piezas: piezas
+        disponibles: disponibles - piezas,
+        countPurchases: countPurchases ? countPurchases + piezas : piezas
       }
-      updatedProducts = [...updatedProducts, newProduct ]
+      updatedProducts = [...updatedProducts, newProduct]
     }
     return updatedProducts;
   }
@@ -413,7 +419,7 @@ async function removeFromInventory(dbItems, items) {
   try {
     // Buscar todos los productos de la lista y reducir inventario
     const dbUpdatedProducts = await Product.bulkWrite(
-      newdbProducts.map(product =>({
+      newdbProducts.map(product => ({
         updateOne: {
           filter: { _id: product._id },
           update: { $set: product }
@@ -425,7 +431,7 @@ async function removeFromInventory(dbItems, items) {
       internalError: false,
       result: { status: 'success', data: dbUpdatedProducts }
     }
-  } catch (error) {
+  } catch (error){
     debug('------removeFromInventory-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -434,9 +440,9 @@ async function removeFromInventory(dbItems, items) {
   }
 }
 
-function piezasVSdisponibles(itemsPiezas, itemsDisponibles) {
-  // retorna [] si todos las piezas de la lista de producto se encuentran disponibles en inventario
-  // si no retorna la lista de productos que sobrepasan el inventario
+function piezasVSdisponibles(itemsPiezas, itemsDisponibles){
+  // Retorna [] si todos las piezas de la lista de producto se encuentran disponibles en inventario
+  // Si no retorna la lista de productos que sobrepasan el inventario
   const greaterThan = itemsPiezas.filter((element, index) => itemsDisponibles[index].disponibles < element.piezas);
 
   return greaterThan
@@ -454,18 +460,18 @@ function localOrderUtilityCalculator(data){
 
   let costo = 0;
   let productsPrice = 0;
-  for (let i = 0; i < dbProducts.length; i++) {
-    const dbitem = dbProducts[i];
-    const itemIndex=searchProductByID(items, dbitem._id)
+  for (let index = 0; index < dbProducts.length; index++){
+    const dbitem = dbProducts[index];
+    const itemIndex = searchProductByID(items, dbitem._id)
     const item = itemIndex === null ? { piezas: 0 } : items[itemIndex]
-    productsPrice += (dbitem.precioPlaza*item.piezas)
-    costo += (dbitem.costo*item.piezas)
+    productsPrice += dbitem.precioPlaza * item.piezas
+    costo += dbitem.costo * item.piezas
   }
   const venta = cobroAdicional ? productsPrice + cobroAdicional.cantidad : productsPrice;
 
   debug('venta: ', venta, ', costo: ', costo);
-  if(totalVenta === venta && totalCosto === costo){
-    return     {
+  if (totalVenta === venta && totalCosto === costo){
+    return {
       sumaMatch: true,
       utility: {
         totalVenta: venta,
@@ -474,7 +480,7 @@ function localOrderUtilityCalculator(data){
       }
     }
   }
-  return     {
+  return {
     sumaMatch: false
   }
 }
@@ -483,13 +489,13 @@ async function createAnyOrder(data){
   // Crea una nueva orden en db
   const orden = new Order(data);
   try {
-    const newOrder = await  orden.save();
+    const newOrder = await orden.save();
     debug('------createAnyOrder-----\nsuccess\n', newOrder);
     return {
       internalError: false,
       result: { status: 'success', data: newOrder }
     }
-  } catch (error) {
+  } catch (error){
     debug('------createAnyOrder-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -498,12 +504,13 @@ async function createAnyOrder(data){
   }
 }
 
-function cleanDateTimeFilters(filters) {
-  if(!filters)
+function cleanDateTimeFilters(filters){
+  if (!filters){
     return null
+  }
   const { startDate, finalDate } = filters
-  if(startDate){
-    const regEx ={ $gte: `${startDate}T00:00:00.000+00:00`, $lte: `${finalDate}T23:59:59.000+00:00` }
+  if (startDate){
+    const regEx = { $gte: `${startDate}T00:00:00.000+00:00`, $lte: `${finalDate}T23:59:59.000+00:00` }
     delete filters.startDate;
     delete filters.finalDate;
     return { ...filters, date: regEx }

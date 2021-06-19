@@ -132,10 +132,19 @@ async function getOneUser(id){
     const publicFields = { _id: 1, authorizedRoutes: 1, mail: 1, fullName: 1, rfc: 1, phone: 1, otherPhone: 1, adress: 1, docsUrl: 1 }
     const someUser = await User.findById(id).select(publicFields)
     debug('------getOneUser-----\nsuccess\n', someUser);
-    return {
-      internalError: false,
-      result: { status: 'success', user: someUser }
+    if (someUser){
+      debug('------getOneUser-----\nsuccess\n', someUser);
+      return {
+        internalError: false,
+        result: { status: 'success', user: someUser }
+      }
     }
+    debug('------getOneUser-----\nInternal error\n\n', someUser);
+    return {
+      internalError: true,
+      result: { errorType: 'Usuario no existente en DB', statusError: 404 }
+    }
+
   } catch (error){
     debug('------getOneUser-----\nInternal error\n\n', error);
     return {

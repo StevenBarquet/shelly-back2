@@ -1,7 +1,8 @@
+/* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
 const express = require('express');
-const debug=require('debug')('app:test')
+const debug = require('debug')('app:test')
 // Others
 const { Product, validateProduct, validateProductWithId } = require('../data-modell/product');
 const { validatePagination, validateSearch, isId } = require('../data-modell/otherValidators')
@@ -11,84 +12,90 @@ const router = express.Router();
 
 // ---------------------------------------------------ROUTES---------------------------------------------
 // ------Create One------------
-router.post('/registrar', (req, res)=>{
+router.post('/registrar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateProduct(req.body)
-  joiCheck(res, validateBody);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, createOneProduct, req.body);
+  }
 
   wrapDBservice(res, createOneProduct, req.body);
 })
 
 // ------Read All ------------
-router.get('/all', (req, res)=>{
+router.get('/all', (req, res) => {
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getAllProducts);
 })
 
 // ----- Read One -------
-router.get('/:id', (req, res)=>{
+router.get('/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, getOneProduct, id);
+  }
 
-  wrapDBservice(res, getOneProduct, id);
 })
 
 // ------Update One------------
-router.put('/editar', (req, res)=>{
+router.put('/editar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateProductWithId(req.body)
-  joiCheck(res, validateBody);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, updateOneProduct, req.body);
+  }
 
-  wrapDBservice(res, updateOneProduct, req.body);
 })
 
 // ------Delete One------------
-router.delete('/borrar/:id', (req, res)=>{
+router.delete('/borrar/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, deleteOneProduct, id);
+  }
 
-  wrapDBservice(res, deleteOneProduct, id);
 })
 
 // ------Get all paginated------------
-router.get('/todos/:pageNumber/:pageSize', (req, res)=>{
+router.get('/todos/:pageNumber/:pageSize', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validatePagination(req.params)
-  joiCheck(res, validateBody);
-
-  wrapDBservice(res, getAllProductsPaginated, req.params);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, getAllProductsPaginated, req.params);
+  }
 })
 
 // ------Get products search------------
-router.post('/buscar', (req, res)=>{
+router.post('/buscar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateSearch(req.body)
-  joiCheck(res, validateBody);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, searchProducts, req.body);
+  }
 
-  wrapDBservice(res, searchProducts, req.body);
 })
 
 // -------------------------------------------------QUERYS-----------------------------------------
 
-async function createOneProduct(data) {
+async function createOneProduct(data){
 // Crea un nuevo producto en la base de datos
   const course = new Product({ ...data });
   try {
-    const result = await  course.save();
+    const result = await course.save();
     debug('------createOneProduct-----\nsuccess\n', result);
     return {
       internalError: false,
       result: { status: 'success', data: result }
     };
-  } catch (error) {
+  } catch (error){
     debug('------createOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -97,7 +104,7 @@ async function createOneProduct(data) {
   }
 }
 
-async function getAllProducts() {
+async function getAllProducts(){
 // Trae todos los productos de la base de datos
   try {
     const products = await Product.find();
@@ -106,7 +113,7 @@ async function getAllProducts() {
       internalError: false,
       result: products
     };
-  } catch (error) {
+  } catch (error){
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -115,18 +122,17 @@ async function getAllProducts() {
   }
 }
 
-async function getAllProductsPaginated(params) {
+async function getAllProductsPaginated(params){
   // Trae todos los productos de la base de datos paginado
   const { pageNumber, pageSize } = params;
-  const pageNumberInt = parseInt(pageNumber);
-  const pageSizeInt = parseInt(pageSize);
+  const pageNumberInt = parseInt(pageNumber, 10);
+  const pageSizeInt = parseInt(pageSize, 10);
   try {
     const products = await Product
       .find()
       .sort({ nombre: 1 })
-      .skip((pageNumberInt-1) *  pageSizeInt)
-      .limit(pageSizeInt)
-    ;
+      .skip((pageNumberInt - 1) * pageSizeInt)
+      .limit(pageSizeInt);
     const productCount = await Product.find().count();
 
     debug('------getAllProducts-----\nsuccess\n', products);
@@ -134,7 +140,7 @@ async function getAllProductsPaginated(params) {
       internalError: false,
       result: { productCount, products }
     };
-  } catch (error) {
+  } catch (error){
     debug('------getAllProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
@@ -143,30 +149,32 @@ async function getAllProductsPaginated(params) {
   }
 }
 
-function fixFilters(filters) {
+function fixFilters(filters){
   const { descuento } = filters
-  if(descuento === undefined)
+  if (descuento === undefined){
     return filters
-  if(descuento)
-    return { ...filters, descuento: { $ne:0 } }
+  }
+  if (descuento){
+    return { ...filters, descuento: { $ne: 0 } }
+  }
   return { ...filters, descuento: 0 }
 }
 
-async function searchProducts(data) {
+async function searchProducts(data){
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
-  const regEx = new RegExp('.*'+searchedValue+'.*', 'i')
+  const regEx = new RegExp(`.*${searchedValue}.*`, 'iu')
   const sortOrder = sortBy || { nombre: 1 }
-  let products; let productCount;
+  let products = []; let productCount = 0;
   const newFilters = fixFilters(filters);
 
   try {
-    if(searchedValue){
+    if (searchedValue){
       products = await Product
         .find(newFilters)
         .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
-        .skip((pageNumber-1) *  pageSize)
+        .skip((pageNumber - 1) * pageSize)
         .limit(pageSize);
 
       productCount = await Product
@@ -174,11 +182,11 @@ async function searchProducts(data) {
         .sort(sortOrder)
         .or([{ nombre: regEx }, { marca: regEx }, { categoria: regEx }, { subcategoria: regEx }, { descripcion: regEx }])
         .countDocuments();
-    } else{
+    } else {
       products = await Product
         .find(newFilters)
         .sort(sortOrder)
-        .skip((pageNumber-1) *  pageSize)
+        .skip((pageNumber - 1) * pageSize)
         .limit(pageSize);
 
       productCount = await Product
@@ -192,16 +200,16 @@ async function searchProducts(data) {
       internalError: false,
       result: { productCount, products }
     };
-  } catch (error) {
+  } catch (error){
     debug('------searchProducts-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error,  errorType: 'Error al traer productos de DB', statusError: 500 }
+      result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
     }
   }
 }
 
-async function getOneProduct(id) {
+async function getOneProduct(id){
 // Trae un producto de la base de datos
   try {
     const someProduct = await Product.findById(id)
@@ -210,23 +218,23 @@ async function getOneProduct(id) {
       internalError: false,
       result: someProduct
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------getOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error,  errorType: 'Error al traer producto de DB', statusError: 404 }
+      result: { ...error, errorType: 'Error al traer producto de DB', statusError: 404 }
     };
   }
 }
 
-async function updateOneProduct(data) {
+async function updateOneProduct(data){
 // Actualiza un producto en la base de datos si existe
   try {
-    // verifica que exista el producto
+    // Verifica que exista el producto
     const someProduct = await Product.findById(data._id)
     try {
-      // si existe intenta hacer update del producto
+      // Si existe intenta hacer update del producto
       someProduct.set({
         ...data
       })
@@ -236,48 +244,48 @@ async function updateOneProduct(data) {
         internalError: false,
         result: { status: 'success' }
       };
-    } catch (error) {
-      // retorna error si no pudiste hacer update
+    } catch (error){
+      // Retorna error si no pudiste hacer update
       debug('------updateOneProduct----\nInternal error\n\n', error);
       return {
         internalError: true,
         result: { ...error, errorType: 'Error al actualizar producto en DB', statusError: 500 }
       }
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no valido
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no valido
     debug('------updateOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,
-      result: { ...error,  errorType: 'Error al buscar producto en DB', statusError: 404 }
+      result: { ...error, errorType: 'Error al buscar producto en DB', statusError: 404 }
     };
 
   }
 }
 
-async function deleteOneProduct(id) {
+async function deleteOneProduct(id){
 // Elimina un producto en la base de datos si existe
   try {
-    // verifica que exista el producto
+    // Verifica que exista el producto
     await Product.findById(id);
     try {
-      // si existe intenta hacer el DELETE
+      // Si existe intenta hacer el DELETE
       const result = await Product.deleteOne({ _id: id })
       debug('------deleteOneProduct-----\nsuccess\n', result);
       return {
         internalError: false,
         result: { status: 'success' }
       }
-    } catch (error) {
-      // retorna error si no pudiste hacer DELETE
+    } catch (error){
+      // Retorna error si no pudiste hacer DELETE
       debug('------deleteOneProduct----\nInternal error\n\n', error);
       return {
         internalError: true,
         result: { ...error, errorType: 'Error al borrar producto en DB', statusError: 401 }
       }
     }
-  } catch (error) {
-    // retorna error si no pudiste hacer busqueda del prod por id no encontrado
+  } catch (error){
+    // Retorna error si no pudiste hacer busqueda del prod por id no encontrado
     debug('------deleteOneProduct-----\nInternal error\n\n', error);
     return {
       internalError: true,

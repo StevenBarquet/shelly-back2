@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
 const express = require('express');
@@ -39,9 +40,9 @@ router.post('/initializate', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateHome(mockHome)
-  joiCheck(res, validateBody);
-
-  wrapDBservice(res, startHome, mockHome);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, startHome, mockHome);
+  }
 })
 
 // ------Read All ------------
@@ -64,9 +65,9 @@ router.put('/editar', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const validateBody = validateHomeWithID(req.body)
-  joiCheck(res, validateBody);
-
-  wrapDBservice(res, updateHome, req.body);
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, updateHome, req.body);
+  }
 })
 
 // ------Delete One------------
@@ -74,9 +75,10 @@ router.delete('/borrar/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
 
   const { id } = req.params
-  checkParams(res, id, isId)
+  if (checkParams(res, id, isId)){
+    wrapDBservice(res, deleteOneHome, id);
+  }
 
-  wrapDBservice(res, deleteOneHome, id);
 })
 // -------------------------------------------------QUERYS-----------------------------------------
 
