@@ -2,5 +2,6 @@
     "mail": {
         "password": "shelly_store_backend_mailPass"
     },
-    "mpToken": "shelly_store_backend_mpToken"
+    "mpToken": "shelly_store_backend_mpToken",
+    "adminUserPass": "admin_user_pass"
 }

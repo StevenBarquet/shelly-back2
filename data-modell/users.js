@@ -46,6 +46,17 @@ function validateUser(user){
   return schema.validate(user)
 }
 
+function validateLogin(user){
+  const schema = Joi.object({
+    mail: Joi.string().min(5)
+      .required(),
+    pass: Joi.string().min(6)
+      .required()
+  })
+
+  return schema.validate(user)
+}
+
 function validateSupportUser(user){
   const schema = Joi.object({
     authorizedRoutes: Joi.array().items(
@@ -60,6 +71,15 @@ function validateSupportUser(user){
       .required(),
     // Perfil
     isSupport: Joi.boolean()
+  })
+
+  return schema.validate(user)
+}
+
+function validateRoute(user){
+  const schema = Joi.object({
+    route: Joi.string().min(5)
+      .required()
   })
 
   return schema.validate(user)
@@ -88,6 +108,8 @@ function validateUserWithID(user){
 }
 
 exports.User = User;
+exports.validateLogin = validateLogin;
+exports.validateRoute = validateRoute;
 exports.validateUser = validateUser;
 exports.validateSupportUser = validateSupportUser;
 exports.validateUserWithID = validateUserWithID;

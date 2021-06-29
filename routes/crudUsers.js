@@ -4,11 +4,12 @@
 const express = require('express');
 const debug = require('debug')('app:test');
 const bcrypt = require('bcrypt');
+const { decode } = require('jsonwebtoken');
 // Others
-const { User, validateUser, validateUserWithID } = require('../data-modell/users');
+const { User, validateUser, validateUserWithID, validateRoute } = require('../data-modell/users');
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 const { isId } = require('../data-modell/otherValidators');
-const { SALT_ROUNDS } = require('../configuration/app-data')
+const { SALT_ROUNDS, TOKEN_NAME } = require('../configuration/app-data')
 
 const router = express.Router();
 
@@ -27,6 +28,12 @@ router.post('/registrar', (req, res) => {
 router.get('/all', (req, res) => {
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getAllUsers);
+})
+
+// ------Read All SU------------
+router.get('su/all', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+  wrapDBservice(res, getAllUsersSU);
 })
 
 // ----- Read One -------
@@ -59,6 +66,18 @@ router.delete('/borrar', (req, res) => {
   }
 })
 
+// ------Verify Token and Route Access------------
+router.post('/routeAuth', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+
+  const { cookie } = req.headers
+  const validateBody = validateRoute(req.body)
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, validateRouteFromToken, { ...req.body, cookie });
+  }
+})
+
+
 // --------------------------------------------MAIN QUERYS/FUNCTIONS------------------------------------
 async function registerNewUser(data){
 
@@ -82,6 +101,24 @@ async function registerNewUser(data){
   // Registar nuevo usuario ó retornar error al registrar
   const dbResult = await createOneUser(userWithCryptedPass.result.newUser)
   return { internalError: dbResult.internalError, result: dbResult.result }
+}
+
+async function getAllUsersSU(){
+  // Trae todos los productos de la base de datos
+  try {
+    const users = await User.find()
+    debug('------getAllusers-----\nsuccess\n', users);
+    return {
+      internalError: false,
+      result: { status: 'success', users }
+    };
+  } catch (error){
+    debug('------getAllusers-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, errorType: 'Error al traer usuarios de DB', statusError: 400 }
+    }
+  }
 }
 
 async function createOneUser(data){
@@ -220,6 +257,28 @@ async function deleteOneUsers(id){
     };
   }
 }
+
+function validateRouteFromToken(data){
+  const { cookie, route } = data
+  const tokenData = getTokenData(cookie)
+  const { authorizedRoutes } = tokenData
+  const isAuthorizedRoute = authorizedRoutes.indexOf(route)
+
+  if (isAuthorizedRoute !== -1){
+    debug('------validateRouteFromToken-----\nsuccess\n', route, '\n', authorizedRoutes);
+    return {
+      internalError: false,
+      result: { status: 'success', authorizedRoutes }
+    }
+  }
+  debug('------validateRouteFromToken-----\nRuta no autorizada\n', route, '\n', authorizedRoutes);
+  return {
+    internalError: true,
+    result: { errorType: 'Ruta no autorizada', badCredentials: true, statusError: 404 }
+  }
+
+
+}
 // ----------------------------------------------AUX QUERYS--------------------------------------
 async function searchByMail(data){
   const { mail } = data;
@@ -259,6 +318,18 @@ async function whithCryptedPassword(user){
       result: { ...error, errorType: 'Error al encryptar password', statusError: 404 }
     }
   }
+}
+
+function getTokenData(cookie){
+  const token = getToken(cookie)
+  return decode(token);
+}
+
+function getToken(cookie){
+  const { length: lengthName } = TOKEN_NAME
+  const { length } = cookie
+
+  return cookie.substring(lengthName + 1, length)
 }
 
 module.exports = router;

@@ -97,7 +97,7 @@ docker image ls
 docker image rm -f shelly_back_image
 docker build -t shelly_back_image .
 docker image ls
-	docker run --network host --name shelly-back-container -p 4000:4000 -d --restart unless-stopped \
+	docker run --network host --name shelly-back-container --env DOMAIN=shelly-store.com -p 4000:4000 -d --restart unless-stopped \
     --mount type=bind,source=/etc/letsencrypt/live/shelly-store.com,target=/etc/letsencrypt/live/shelly-store.com \
     --mount type=bind,source=/etc/letsencrypt/archive/shelly-store.com,target=/etc/letsencrypt/archive/shelly-store.com \
     shelly_back_image
@@ -116,7 +116,7 @@ docker image ls
 docker image rm -f shelly_back_image
 docker build -t shelly_back_image .
 docker image ls
-	docker run --network host --name shelly-back-container --env SSL_PATH=/etc/letsencrypt/live/copiadorasqueen.com -p 4000:4000 -d --restart unless-stopped \
+	docker run --network host --name shelly-back-container --env DOMAIN=copiadorasqueen.com --env SSL_PATH=/etc/letsencrypt/live/copiadorasqueen.com -p 4000:4000 -d --restart unless-stopped \
     --mount type=bind,source=/etc/letsencrypt/live/copiadorasqueen.com,target=/etc/letsencrypt/live/copiadorasqueen.com \
     --mount type=bind,source=/etc/letsencrypt/archive/copiadorasqueen.com,target=/etc/letsencrypt/archive/copiadorasqueen.com \
     shelly_back_image

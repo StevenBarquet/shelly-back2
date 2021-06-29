@@ -155,7 +155,7 @@
         "no-var": 1,
         "object-shorthand": ["warn", "always"],
         "prefer-const": 1,
-        "prefer-destructuring": ["warn", {"array": true, "object": true}, {"enforceForRenamedProperties": false}],
+        "prefer-destructuring": ["warn", {"array": false, "object": true}, {"enforceForRenamedProperties": false}],
         "prefer-spread": 1,
         "prefer-template": 1,
         "require-yield": 1,

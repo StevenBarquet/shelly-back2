@@ -5,6 +5,7 @@ const debugProd = require('debug')('app:prod')
 // Middlewares
 const helmet = require('helmet');
 const cors = require('cors');
+const isAuth = require('./CustomMidlewares/isAuth')
 // Routes
 const productAdminRoutes = require('./routes/productsAdmin')
 const productClientRoutes = require('./routes/productsClient')
@@ -12,10 +13,13 @@ const homeServicesRoutes = require('./routes/home')
 const orderRoutes = require('./routes/orders')
 const analyticsRoutes = require('./routes/analytics')
 const usersRoutes = require('./routes/crudUsers')
+const authRoutes = require('./routes/authentication')
+const initRoutes = require('./routes/initializate')
 // Otros
 const startLogs = require('./configuration/startLogs')
 const mongoConnect = require('./configuration/mongoConfig')
 const getCerts = require('./configuration/getCerts')
+const { CORS_OPTIONS } = require('./configuration/app-data')
 
 // -----------------------------------CONFIG-------------------------------
 const app = express();
@@ -28,15 +32,17 @@ startLogs(enviroment); // Just and example of posible use of configs
 // -----------------------------------MIDDLEWARES-------------------------------
 app.use(express.json()); // Needed to read req.body
 app.use(helmet()); // For security
-app.use(cors()); // For security
+app.use(cors(CORS_OPTIONS)); // For security
 
 // -----------------------------------ROUTES-------------------------------
-app.use('/admin/productos/', productAdminRoutes)
+app.use('/admin/productos/', isAuth, productAdminRoutes)
 app.use('/client/productos/', productClientRoutes)
-app.use('/homeServices/', homeServicesRoutes)
-app.use('/ordenes/', orderRoutes)
-app.use('/analytics/', analyticsRoutes)
-app.use('/users/', usersRoutes)
+app.use('/homeServices/', isAuth, homeServicesRoutes)
+app.use('/ordenes/', isAuth, orderRoutes)
+app.use('/analytics/', isAuth, analyticsRoutes)
+app.use('/users/', isAuth, usersRoutes)
+app.use('/authentication/', authRoutes)
+app.use('/init/', initRoutes)
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');
