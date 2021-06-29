@@ -83,8 +83,10 @@ const CATALOGOS = {
     '/master/productInfo',
     '/master/storeCart',
     '/master/adminOrders',
-    '/master/editOrder',
-    '/master/publicHome'
+    '/master/clientHome',
+    '/master/editProfile',
+    '/master/adminUsers',
+    '/master/createUser'
   ]
 }
 exports.CATALOGOS = CATALOGOS
