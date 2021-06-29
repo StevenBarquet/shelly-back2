@@ -57,7 +57,7 @@ const ADMIN_SUDO = {
 exports.ADMIN_SUDO = ADMIN_SUDO
 
 const domain = process.env.DOMAIN || 'no-domain'
-const whitelist = ['http://localhost:3000', 'https://localhost:3000', `http://${domain}`, `https://${domain}`]
+const whitelist = ['http://127.0.0.1', 'https://127.0.0.1', 'http://187.190.193.222', 'https://187.190.193.222', 'http://localhost:3000', 'https://localhost:3000', `http://${domain}`, `https://${domain}`]
 const CORS_OPTIONS = {
   credentials: true,
   origin(origin, callback){
