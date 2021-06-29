@@ -51,6 +51,8 @@ function getCookieData(reqCookie){
 }
 
 function isInvalidTokenName(tokenName){
+  console.log('tokenName: ', tokenName);
+  console.log('TOKEN_NAME: ', TOKEN_NAME);
   if (tokenName && tokenName === TOKEN_NAME){
     return false
   }
