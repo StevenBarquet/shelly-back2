@@ -32,7 +32,7 @@ startLogs(enviroment); // Just and example of posible use of configs
 // -----------------------------------MIDDLEWARES-------------------------------
 app.use(express.json()); // Needed to read req.body
 app.use(helmet()); // For security
-app.use(cors(CORS_OPTIONS)); // For security
+app.use(cors()); // For security
 
 // -----------------------------------ROUTES-------------------------------
 app.use('/admin/productos/', isAuth, productAdminRoutes)
