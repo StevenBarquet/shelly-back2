@@ -15,6 +15,7 @@ const analyticsRoutes = require('./routes/analytics')
 const usersRoutes = require('./routes/crudUsers')
 const authRoutes = require('./routes/authentication')
 const initRoutes = require('./routes/initializate')
+const utilitiesRoutes = require('./routes/utilities')
 // Otros
 const startLogs = require('./configuration/startLogs')
 const mongoConnect = require('./configuration/mongoConfig')
@@ -43,6 +44,8 @@ app.use('/analytics/', isAuth, analyticsRoutes)
 app.use('/users/', isAuth, usersRoutes)
 app.use('/authentication/', authRoutes)
 app.use('/init/', initRoutes)
+app.use('/utilities/', isAuth, utilitiesRoutes)
+
 
 // -----------------------------------SSL-------------------------------
 const http = require('http');

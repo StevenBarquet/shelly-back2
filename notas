@@ -1,4 +1,5 @@
 	Pendiente
+-Preguntar si recuperar inventario en cancelacion
 -Ordenar productos por fecha en filtros y modificar la fecha con la actual al hacer update de producto
 -To lower case all mails
 -Fix all joiChecks and validateId
