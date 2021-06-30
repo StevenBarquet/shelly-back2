@@ -320,16 +320,42 @@ async function whithCryptedPassword(user){
   }
 }
 
-function getTokenData(cookie){
-  const token = getToken(cookie)
-  return decode(token);
+function getTokenData(cookies){
+  const token = searchToken(cookies)
+  const decodedToken = decode(token)
+  return decodedToken;
 }
 
-function getToken(cookie){
-  const { length: lengthName } = TOKEN_NAME
-  const { length } = cookie
+function searchToken(cookies){
+  const cookiesArray = cookies.split(';');
+  for (let index = 0; index < cookiesArray.length; index++){
+    let cookie = cookiesArray[index];
+    cookie = cookie.trim();
+    const { authToken, reqTokenName } = getCookieData(cookie);
+    if (isValidTokenName(reqTokenName)){
+      debug('------searchToken-----\nsuccess: Token loclizado\n');
+      return authToken
+    }
+  }
+}
 
-  return cookie.substring(lengthName + 1, length)
+function getCookieData(reqCookie){
+  const { length: lengthName } = TOKEN_NAME
+  const { length } = reqCookie
+
+  const result = {
+    authToken: reqCookie.substring(lengthName + 1, length),
+    reqTokenName: reqCookie.substring(0, lengthName)
+  }
+
+  return result
+}
+
+function isValidTokenName(tokenName){
+  if (tokenName && tokenName === TOKEN_NAME){
+    return true
+  }
+  return false
 }
 
 module.exports = router;

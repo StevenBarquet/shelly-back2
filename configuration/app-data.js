@@ -35,7 +35,6 @@ exports.MOCK_HOME = MOCK_HOME
 
 const ADMIN_SUDO = {
   authorizedRoutes: [
-    '/master',
     '/master/utilidadDia',
     '/master/utilidadSemana',
     '/master/utilidadMes',
@@ -47,7 +46,11 @@ const ADMIN_SUDO = {
     '/master/storeCart',
     '/master/adminOrders',
     '/master/editOrder',
-    '/master/publicHome'
+    '/master/clientHome',
+    '/master',
+    '/master/editProfile',
+    '/master/adminUsers',
+    '/master/createUser'
   ],
   mail: 'soporte@forgemytech.com',
   pass: process.env.ADMIN_PASS || '123456',

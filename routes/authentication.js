@@ -64,6 +64,7 @@ async function doLogin(data){
   }
 
   // Instalar access token y notificar success
+  debug('------doLogin-----\nsuccess\n', credentials.result);
   return { internalError: credentials.internalError, result: credentials.result }
 }
 

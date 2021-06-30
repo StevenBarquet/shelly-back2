@@ -12,19 +12,17 @@ function isAuth(req, res, next){
   validateCookie(cookie, res, next)
 }
 
-function validateCookie(reqCookie, res, next){
-  if (!reqCookie){
+function validateCookie(reqCookies, res, next){
+  if (!reqCookies){
     debug('------validateCookie-----\nInternal error: Petición sin credenciales');
     const result = { badCredentials: true, errorType: 'Peticion sin credenciales' }
     res.status(400).send(result)
   } else {
-    const { authToken, reqTokenName } = getCookieData(reqCookie);
-    if (isInvalidTokenName(reqTokenName)){
-      debug('------validateCookie-----\nInternal error: Nombre de token erroneo');
-      const result = { badCredentials: true, errorType: 'Credenciales erroneas o sesion expirada' }
-      res.status(400).send(result)
+    const tokenData = searchCookie(reqCookies);
+    if (tokenData.internalError){
+      res.status(400).send(tokenData.result)
     } else {
-      const token = isValidToken(authToken)
+      const token = isValidToken(tokenData.result.authToken)
       if (!token){
         debug('------validateCookie-----\nInternal error: Token inválido');
         const result = { badCredentials: true, errorType: 'Credenciales erroneas o sesion expirada' }
@@ -35,6 +33,27 @@ function validateCookie(reqCookie, res, next){
         return next();
       }
     }
+  }
+}
+
+function searchCookie(cookies){
+  const cookiesArray = cookies.split(';');
+  for (let index = 0; index < cookiesArray.length; index++){
+    let cookie = cookiesArray[index];
+    cookie = cookie.trim();
+    const { authToken, reqTokenName } = getCookieData(cookie);
+    if (isValidTokenName(reqTokenName)){
+      debug('------searchCookie-----\nsuccess: Token loclizado\n');
+      return {
+        internalError: false,
+        result: { status: 'success', authToken }
+      }
+    }
+  }
+  debug('------searchCookie-----\nInternal error: Token no loclizado');
+  return {
+    internalError: true,
+    result: { badCredentials: true, errorType: 'Token no loclizado' }
   }
 }
 
@@ -50,22 +69,20 @@ function getCookieData(reqCookie){
   return result
 }
 
-function isInvalidTokenName(tokenName){
-  console.log('tokenName: ', tokenName);
-  console.log('TOKEN_NAME: ', TOKEN_NAME);
+function isValidTokenName(tokenName){
   if (tokenName && tokenName === TOKEN_NAME){
-    return false
+    return true
   }
-  return true
+  return false
 }
 
 function isValidToken(someToken){
   try {
     const payload = verify(someToken, TOKEN_SECRET)
-    debug('Token: ', payload);
+    // Console.log('Decoded token before refresh:\n', payload);
     return payload
   } catch (err){
-    debug('\n---Error validating token---\n:')
+    debug('\n---Error validating token---\n:', err)
     return null
   }
 }
