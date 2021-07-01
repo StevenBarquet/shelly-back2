@@ -85,6 +85,15 @@ function validateRoute(user){
   return schema.validate(user)
 }
 
+function validateMail(data){
+  const schema = Joi.object({
+    mail: Joi.string().min(5)
+      .required()
+  })
+
+  return schema.validate(data)
+}
+
 function validateUserWithID(user){
   const schema = Joi.object({
     _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/u)
@@ -107,9 +116,34 @@ function validateUserWithID(user){
   return schema.validate(user)
 }
 
+function validateUserWithIDAndPass(user){
+  const schema = Joi.object({
+    _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/u)
+      .required(),
+    authorizedRoutes: Joi.array().items(
+      Joi.string()
+    ),
+    mail: Joi.string().min(5),
+    pass: Joi.string().min(6),
+    fullName: Joi.string().min(5),
+    // Perfil
+    rfc: Joi.string(),
+    phone: Joi.string(),
+    otherPhone: Joi.string(),
+    adress: Joi.string(),
+    docsUrl: Joi.string(),
+    // Other
+    isSupport: Joi.boolean()
+  })
+
+  return schema.validate(user)
+}
+
 exports.User = User;
 exports.validateLogin = validateLogin;
 exports.validateRoute = validateRoute;
 exports.validateUser = validateUser;
+exports.validateMail = validateMail;
+exports.validateUserWithIDAndPass = validateUserWithIDAndPass;
 exports.validateSupportUser = validateSupportUser;
 exports.validateUserWithID = validateUserWithID;

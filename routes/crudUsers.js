@@ -6,10 +6,11 @@ const debug = require('debug')('app:test');
 const bcrypt = require('bcrypt');
 const { decode } = require('jsonwebtoken');
 // Others
-const { User, validateUser, validateUserWithID, validateRoute } = require('../data-modell/users');
+const { User, validateMail, validateUser, validateUserWithID, validateRoute, validateUserWithIDAndPass } = require('../data-modell/users');
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 const { isId } = require('../data-modell/otherValidators');
 const { SALT_ROUNDS, TOKEN_NAME } = require('../configuration/app-data')
+const { ignoreArgs } = require('../others/otherMethods')
 
 const router = express.Router();
 
@@ -46,6 +47,16 @@ router.post('/one', (req, res) => {
   }
 })
 
+// ----- Read One by mail-------
+router.post('/oneMail', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateMail(req.body)
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, getOneUserMail, req.body);
+  }
+})
+
 // ------Update One------------
 router.put('/editar', (req, res) => {
   debug('requested for: ', req.originalUrl)
@@ -53,6 +64,15 @@ router.put('/editar', (req, res) => {
   const validateBody = validateUserWithID(req.body)
   if (joiCheck(res, validateBody)){
     wrapDBservice(res, updateOneUser, req.body);
+  }
+})
+
+router.put('/editarPerfil', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateUserWithIDAndPass(req.body)
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, updateOneUserWithPass, req.body);
   }
 })
 
@@ -191,6 +211,44 @@ async function getOneUser(id){
   }
 }
 
+async function getOneUserMail(data){
+  // Si hay errores al buscar correo
+  const userExist = await searchByMail(data)
+  if (userExist.internalError){
+    return { internalError: userExist.internalError, result: userExist.result }
+  }
+
+  // Verificar correo no registrado
+  if (!userExist.internalError && userExist.result.users.length !== 1){
+    return { internalError: true, result: { errorType: 'El usuario no encontrado', statusError: 400 } }
+  }
+
+  const ignore = ['pass', '__v', 'authorizedRoutes']
+  const someUsers = userExist.result.users[0].toJSON()
+  const fixedUser = ignoreArgs(someUsers, ignore)
+  debug('------getOneUserMail-----\nsuccess\n', fixedUser);
+  return {
+    internalError: false,
+    result: { status: 'success', userData: fixedUser }
+  };
+
+}
+async function updateOneUserWithPass(data){
+  const { pass } = data
+  let fixedUser = data
+  if (pass){
+    // Hash pass
+    const userWithCryptedPass = await whithCryptedPassword(data)
+    if (userWithCryptedPass.internalError){
+      return { internalError: userWithCryptedPass.internalError, result: userWithCryptedPass.result }
+    }
+    fixedUser = userWithCryptedPass.result.newUser
+  }
+
+  // Do update
+  const updatedUser = updateOneUser(fixedUser);
+  return updatedUser
+}
 async function updateOneUser(data){
 // Actualiza un producto en la base de datos si existe
   try {
@@ -261,14 +319,14 @@ async function deleteOneUsers(id){
 function validateRouteFromToken(data){
   const { cookie, route } = data
   const tokenData = getTokenData(cookie)
-  const { authorizedRoutes } = tokenData
+  const { authorizedRoutes, mail, fullName } = tokenData
   const isAuthorizedRoute = authorizedRoutes.indexOf(route)
 
   if (isAuthorizedRoute !== -1){
-    debug('------validateRouteFromToken-----\nsuccess\n', route, '\n', authorizedRoutes);
+    debug('------validateRouteFromToken-----\nsuccess\n', route, '\n');
     return {
       internalError: false,
-      result: { status: 'success', authorizedRoutes }
+      result: { status: 'success', sessionData: { mail, fullName, authorizedRoutes } }
     }
   }
   debug('------validateRouteFromToken-----\nRuta no autorizada\n', route, '\n', authorizedRoutes);
