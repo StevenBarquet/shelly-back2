@@ -11,20 +11,10 @@ const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
 const router = express.Router();
 
 // ---------------------------------------------------ROUTES---------------------------------------------
-// ------Read All ------------
-router.get('/all', (req, res) => {
-  debug('requested for: ', req.originalUrl)
-  wrapDBservice(res, getAllHome);
-})
 // ------Read Home index 0 ------------
 router.get('/getHome', (req, res) => {
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getHome);
-})
-// ------Read Home index 0 for clients ------
-router.get('/getHomePublic', (req, res) => {
-  debug('requested for: ', req.originalUrl)
-  wrapDBservice(res, getHomeClient);
 })
 // ------Update One------------
 router.put('/editar', (req, res) => {
@@ -48,31 +38,11 @@ router.delete('/borrar/:id', (req, res) => {
 })
 // -------------------------------------------------QUERYS-----------------------------------------
 
-async function getAllHome(){
-// Trae todos los home de la base de datos
-  try {
-    const products = await Home.find().sort({ sortIndex: 1 });
-    debug('------getAllHome-----\nsuccess\n', products);
-    return {
-      internalError: false,
-      result: products
-    };
-  } catch (error){
-    debug('------getAllHome-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, errorType: 'Error al traer todos los home de DB', statusError: 500 }
-    }
-  }
-}
-
 async function getHome(){
   // Trae todos los productos de la base de datos
   try {
     const homes = await Home
       .find()
-      .sort({ sortIndex: 1 });
-
     try {
       debug('------getAllHome-----\nsuccess\n', homes);
       return {
@@ -84,36 +54,6 @@ async function getHome(){
       return {
         internalError: true,
         result: { ...error, errorType: 'Error al traer home[0] de DB', statusError: 500 }
-      }
-    }
-  } catch (error){
-    debug('------getAllHome-----\nInternal error\n\n', error);
-    return {
-      internalError: true,
-      result: { ...error, errorType: 'Error al traer el home de DB', statusError: 500 }
-    }
-  }
-}
-
-async function getHomeClient(){
-  // Trae todos los productos de la base de datos
-  try {
-    const fullHome = await Home
-      .find()
-      .sort({ sortIndex: 1 });
-
-    try {
-      debug('------getAllHome-----\nsuccess\n', fullHome);
-      const filtredHome = bannerFilter(fullHome[0])
-      return {
-        internalError: false,
-        result: filtredHome
-      };
-    } catch (error){
-      debug('------getAllHome-----\nInternal error\n\n', error);
-      return {
-        internalError: true,
-        result: { ...error, errorType: 'Error al traer el home[0] filtred de DB', statusError: 500 }
       }
     }
   } catch (error){
@@ -189,16 +129,6 @@ async function deleteOneHome(id){
       result: { ...error, errorType: 'Error al traer el home de DB', statusError: 404 }
     };
   }
-}
-
-function bannerFilter(homeObj){
-  const { banners } = homeObj;
-  if (banners && banners.length > 0){
-    const newBanners = banners.filter(element => element.visible === true)
-    return { ...homeObj.toJSON(), banners: newBanners }
-  }
-
-  return homeObj
 }
 
 module.exports = router;

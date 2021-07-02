@@ -6,10 +6,8 @@ const searchProductByID = (items, id) => {
   const idFIx = typeof id === 'object' ? id.toJSON() : id;
   for (let index = 0; index < items.length; index++){
     const item = items[index];
-    debug('item._id', item._id, 'id', idFIx);
-    debug('typeof item._id', typeof item._id)
-    debug('typeof id', typeof idFIx)
-    if (item._id === idFIx){
+    const fixedItemId = typeof item._id === 'object' ? item._id.toJSON() : item._id;
+    if (fixedItemId === idFIx){
       found = index;
       break
     }

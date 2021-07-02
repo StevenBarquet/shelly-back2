@@ -23,7 +23,7 @@ router.post('/ventaLocal', async(req, res) => {
   const { internalError, result } = await validateProductsDB(req.body);
   if (internalError){
     debug('Error: ', result.errorType)
-    res.status(400).send({ internalError, result })
+    res.status(400).send(result)
   } else {
     // Si la lista de productos de la orden es válida
     const { dbProducts, utility } = result;
@@ -443,8 +443,10 @@ async function removeFromInventory(dbItems, items){
 function piezasVSdisponibles(itemsPiezas, itemsDisponibles){
   // Retorna [] si todos las piezas de la lista de producto se encuentran disponibles en inventario
   // Si no retorna la lista de productos que sobrepasan el inventario
-  const greaterThan = itemsPiezas.filter((element, index) => itemsDisponibles[index].disponibles < element.piezas);
-
+  const greaterThan = itemsPiezas.filter(itemFromReq => {
+    const dbItemIndex = searchProductByID(itemsDisponibles, itemFromReq._id)
+    return itemsDisponibles[dbItemIndex].disponibles < itemFromReq.piezas
+  });
   return greaterThan
 }
 

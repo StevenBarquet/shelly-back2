@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 // --------------------------------------IMPORTS------------------------------------
 // Dependencies
 const Joi = require('joi'); // Joi is a class so uppercase
@@ -21,10 +22,9 @@ const homeSchema = new mongoose.Schema({
       sortIndex: { type: Number, required: true }
     }
   ],
-  sortIndex: { type: Number, required: true },
   paragraph: { type: String, required: true },
-  notice: { type: String, required: true },
-  date: { type: Date, default: Date.now }
+  paragraphImg: { type: String, required: true },
+  notice: { type: String, required: true }
 });
 
 const Home = mongoose.model('Home', homeSchema)
@@ -52,8 +52,9 @@ function validateHome(home){
         sortIndex: Joi.number().required()
       })
     ),
-    sortIndex: Joi.number().required(),
     paragraph: Joi.string().min(3)
+      .required(),
+    paragraphImg: Joi.string().min(3)
       .required(),
     notice: Joi.string().min(3)
       .max(100)
@@ -85,8 +86,9 @@ function validateHomeWithID(home){
         sortIndex: Joi.number().required()
       })
     ),
-    sortIndex: Joi.number().required(),
     paragraph: Joi.string().min(3)
+      .required(),
+    paragraphImg: Joi.string().min(3)
       .required(),
     notice: Joi.string().min(3)
       .max(100)
