@@ -19,8 +19,6 @@ router.post('/registrar', (req, res) => {
   if (joiCheck(res, validateBody)){
     wrapDBservice(res, createOneProduct, req.body);
   }
-
-  wrapDBservice(res, createOneProduct, req.body);
 })
 
 // ------Read All ------------

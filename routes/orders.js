@@ -323,7 +323,7 @@ async function validateProductsDB(data){
   const { cobroAdicional } = data
 
   // Case: No hay productos pero si hay cobro adicional
-  if (products.length === 0 && cobroAdicional && cobroAdicional.cantidad > 0){
+  if (products.length === 0 && cobroAdicional && cobroAdicional.cantidad !== 0){
     const utilityAdicional = {
       totalVenta: cobroAdicional.cantidad,
       totalCosto: 0,
