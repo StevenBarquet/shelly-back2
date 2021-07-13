@@ -24,7 +24,8 @@ const homeSchema = new mongoose.Schema({
   ],
   paragraph: { type: String, required: true },
   paragraphImg: { type: String, required: true },
-  notice: { type: String, required: true }
+  notice: String,
+  location: String
 });
 
 const Home = mongoose.model('Home', homeSchema)
@@ -35,6 +36,7 @@ function validateHome(home){
   const schema = Joi.object({
     banners: Joi.array().items(
       Joi.object({
+        _id: Joi.string().min(3),
         imgDesk: Joi.string().min(3)
           .required(),
         imgMovil: Joi.string().min(3)
@@ -57,6 +59,8 @@ function validateHome(home){
     paragraphImg: Joi.string().min(3)
       .required(),
     notice: Joi.string().min(3)
+      .max(100),
+    location: Joi.string().min(3)
       .max(100)
   })
 
@@ -69,6 +73,7 @@ function validateHomeWithID(home){
       .required(),
     banners: Joi.array().items(
       Joi.object({
+        _id: Joi.string().min(3),
         imgDesk: Joi.string().min(3)
           .required(),
         imgMovil: Joi.string().min(3)
@@ -91,6 +96,8 @@ function validateHomeWithID(home){
     paragraphImg: Joi.string().min(3)
       .required(),
     notice: Joi.string().min(3)
+      .max(100),
+    location: Joi.string().min(3)
       .max(100)
   })
 
