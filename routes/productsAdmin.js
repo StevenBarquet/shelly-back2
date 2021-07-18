@@ -27,6 +27,12 @@ router.get('/all', (req, res) => {
   wrapDBservice(res, getAllProducts);
 })
 
+// ------Read All ------------
+router.get('/all/inventory', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+  wrapDBservice(res, getAllProductsInventory);
+})
+
 // ----- Read One -------
 router.get('/:id', (req, res) => {
   debug('requested for: ', req.originalUrl)
@@ -113,6 +119,25 @@ async function getAllProducts(){
     };
   } catch (error){
     debug('------getAllProducts-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
+    }
+  }
+}
+
+async function getAllProductsInventory(){
+  // Trae todos los productos de la base de datos
+  try {
+    const products = await Product.find()
+      .select({ _id: 1, nombre: 1, costo: 1, precioOnline: 1, precioPlaza: 1, disponibles: 1, categoria: 1, countPurchases: 1 });
+    debug('------getAllProductsInventory-----\nsuccess\n', products);
+    return {
+      internalError: false,
+      result: products
+    };
+  } catch (error){
+    debug('------getAllProductsInventory-----\nInternal error\n\n', error);
     return {
       internalError: true,
       result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
