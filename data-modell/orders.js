@@ -1,5 +1,12 @@
+/* eslint-disable max-lines-per-function */
 const Joi = require('joi'); // Joi is a class so uppercase
 const mongoose = require('mongoose');
+
+const fiveHoursLess = function(){
+  const timeObject = new Date();
+  timeObject.setTime(timeObject.getTime() - 1000 * 3600 * 5);
+  return timeObject;
+};
 
 // ------------------------------------------------MODEL DATA BASE------------------------------------------
 const orderSchema = new mongoose.Schema({
@@ -26,19 +33,21 @@ const orderSchema = new mongoose.Schema({
     numAlterno: String
   },
   // Products Data (optional)
-  items : [{
-    categoria: [String],
-    nombre: String,
-    piezas: Number,
-    disponibles: Number,
-    images: {
-      cover: String,
-      mini: String
-    },
-    _id : String,
-    costo: Number,
-    precio: Number
-  }],
+  items: [
+    {
+      categoria: [String],
+      nombre: String,
+      piezas: Number,
+      disponibles: Number,
+      images: {
+        cover: String,
+        mini: String
+      },
+      _id: String,
+      costo: Number,
+      precio: Number
+    }
+  ],
   cobroAdicional: {
     concepto: String,
     cantidad: Number
@@ -52,22 +61,22 @@ const orderSchema = new mongoose.Schema({
     guia: [{ link: String, codigo: String }]
   },
   // Purchase Data (optional)
-  ventaTipo: { type: String, required: true }, // local 133, fb, página, etc
-  responsableVenta: { type: String, required: true }, // empleado, gerente o cliente
+  ventaTipo: { type: String, required: true }, // Local 133, fb, página, etc
+  responsableVenta: { type: String, required: true }, // Empleado, gerente o cliente
   metodoPago: { type: String, required: true },
   notaVenta: String,
   estatus: { type: String, required: true },
   totalVenta: { type: Number, required: true },
   totalCosto: { type: Number, required: true },
   utility: { type: Number, required: true },
-  date: { type: Date, default: Date.now }
+  date: { type: Date, default: fiveHoursLess }
 });
 
 const Order = mongoose.model('Order', orderSchema)
 
 // ------------------------------------------------MODEL DATA VALIDATORS------------------------------------------
 
-function validateOrderLocal(order) {
+function validateOrderLocal(order){
   const schema = Joi.object({
     // Client Data (optional)
     correo: Joi.string(),
@@ -91,20 +100,22 @@ function validateOrderLocal(order) {
       numAlterno: Joi.string()
     }),
     // Products Data (optional)
-    items : Joi.array().items(
+    items: Joi.array().items(
       Joi.object({
         categoria: Joi.array().items(Joi.string()),
         nombre: Joi.string(),
         piezas: Joi.number().integer(),
-        disponibles: Joi.number().integer().required(),
+        disponibles: Joi.number().integer()
+          .required(),
         images: Joi.object({
           cover: Joi.string(),
           mini: Joi.string()
         }),
-        _id : Joi.string().required(),
+        _id: Joi.string().required(),
         costo: Joi.number().required(),
         precio: Joi.number().required()
-      })).required(),
+      }))
+      .required(),
     cobroAdicional: Joi.object({
       concepto: Joi.string(),
       cantidad: Joi.number()
@@ -134,10 +145,11 @@ function validateOrderLocal(order) {
   return schema.validate(order, { abortEarly: false })
 }
 
-function validateOrderWithId(order) {
+function validateOrderWithId(order){
   const schema = Joi.object({
     // Client Data (optional)
-    _id: Joi.string().min(3).required(),
+    _id: Joi.string().min(3)
+      .required(),
     correo: Joi.string(),
     nombre: Joi.string(),
     apellido: Joi.string(),
@@ -159,20 +171,22 @@ function validateOrderWithId(order) {
       numAlterno: Joi.string()
     }),
     // Products Data (optional)
-    items : Joi.array().items(
+    items: Joi.array().items(
       Joi.object({
         categoria: Joi.array().items(Joi.string()),
         nombre: Joi.string(),
         piezas: Joi.number().integer(),
-        disponibles: Joi.number().integer().required(),
+        disponibles: Joi.number().integer()
+          .required(),
         images: Joi.object({
           cover: Joi.string(),
           mini: Joi.string()
         }),
-        _id : Joi.string().required(),
+        _id: Joi.string().required(),
         costo: Joi.number().required(),
         precio: Joi.number().required()
-      })).required(),
+      }))
+      .required(),
     cobroAdicional: Joi.object({
       concepto: Joi.string(),
       cantidad: Joi.number()
@@ -204,11 +218,12 @@ function validateOrderWithId(order) {
   return schema.validate(order, { abortEarly: false })
 }
 
-function validateProducts(order) {
+function validateProducts(order){
   const schema = Joi.object({
-    items : Joi.array().items(Joi.object({
-      piezas: Joi.number().integer().required(),
-      _id : Joi.string().required()
+    items: Joi.array().items(Joi.object({
+      piezas: Joi.number().integer()
+        .required(),
+      _id: Joi.string().required()
     }).required()
     )
   })
@@ -216,7 +231,7 @@ function validateProducts(order) {
   return schema.validate(order)
 }
 
-exports.Order = Order ;
+exports.Order = Order;
 exports.validateOrderLocal = validateOrderLocal;
 exports.validateOrderWithId = validateOrderWithId;
 exports.validateProducts = validateProducts;
