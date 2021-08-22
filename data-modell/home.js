@@ -104,6 +104,22 @@ function validateHomeWithID(home){
   return schema.validate(home)
 }
 
+function validateProductsIds(params){
+  const schema = Joi.object({
+    products: Joi.array().max(12)
+      .items(
+        Joi.object({
+          porductID: Joi.string().min(3)
+            .required(),
+          sortIndex: Joi.number().required()
+        })
+      )
+  })
+
+  return schema.validate(params)
+}
+
 exports.Home = Home;
 exports.validateHome = validateHome;
 exports.validateHomeWithID = validateHomeWithID;
+exports.validateProductsIds = validateProductsIds;

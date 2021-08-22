@@ -4,8 +4,9 @@
 const express = require('express');
 const debug = require('debug')('app:test')
 // Others
-const { Home } = require('../data-modell/home');
-const { wrapDBservice } = require('./respondServices');
+const { Home, validateProductsIds } = require('../data-modell/home');
+const { Product } = require('../data-modell/product');
+const { wrapDBservice, joiCheck } = require('./respondServices');
 
 const router = express.Router();
 
@@ -15,13 +16,23 @@ router.get('/getHome', (req, res) => {
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getHomeClient);
 })
+
+// ------ Get Home Products ------
+router.post('/getProducts', (req, res) => {
+  debug('requested for: ', req.originalUrl)
+
+  const validateBody = validateProductsIds(req.body)
+  if (joiCheck(res, validateBody)){
+    wrapDBservice(res, getHomeProducts, req.body);
+  }
+})
+
 // -------------------------------------------------QUERYS-----------------------------------------
 async function getHomeClient(){
   // Trae todos los productos de la base de datos
   try {
     const fullHome = await Home
       .find()
-      .sort({ sortIndex: 1 });
 
     try {
       debug('------getAllHome-----\nsuccess\n', fullHome);
@@ -45,6 +56,29 @@ async function getHomeClient(){
     }
   }
 }
+async function getHomeProducts(data){
+  const ids = data.products.map(element => element.porductID)
+  debug('\nids\n', ids);
+  // Trae todos los productos de la base de datos
+  try {
+    const selectedProps = { _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, 'images.cover': 1, descuento: 1 }
+    const products = await Product.find({
+      '_id': { $in: ids }
+    }).select(selectedProps)
+    debug('------getAllProducts-----\nsuccess\n', products);
+    return {
+      internalError: false,
+      result: products
+    };
+  } catch (error){
+    debug('------getAllProducts-----\nInternal error\n\n', error);
+    return {
+      internalError: true,
+      result: { ...error, errorType: 'Error al traer productos de DB', statusError: 500 }
+    }
+  }
+}
+// ------------------------------------------------AUX-METHOD------------------------------------------
 function bannerFilter(homeObj){
   const { banners } = homeObj;
   if (banners && banners.length > 0){

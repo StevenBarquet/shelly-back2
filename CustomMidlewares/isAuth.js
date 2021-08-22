@@ -5,7 +5,7 @@
 const debug = require('debug')('app:others');
 const { verify, sign } = require('jsonwebtoken');
 // Others
-const { TOKEN_NAME, TOKEN_SECRET } = require('../configuration/app-data')
+const { TOKEN_NAME, TOKEN_SECRET, COOKIE_EXPIRES } = require('../configuration/app-data')
 
 function isAuth(req, res, next){
   const { cookie } = req.headers
@@ -90,7 +90,7 @@ function isValidToken(someToken){
 function setRefreshToken(decodedToken, res){
   const { userId, mail, authorizedRoutes, fullName } = decodedToken
   const tokenData = { userId, mail, authorizedRoutes, fullName }
-  const refreshToken = sign(tokenData, TOKEN_SECRET, { expiresIn: '30min' })
+  const refreshToken = sign(tokenData, TOKEN_SECRET, { expiresIn: COOKIE_EXPIRES })
   res.cookie(TOKEN_NAME, refreshToken);
   debug('Refresh token set')
 }

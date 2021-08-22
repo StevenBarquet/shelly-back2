@@ -57,7 +57,7 @@ async function getAllProducts(){
   try {
     const products = await Product
       .find({ online: true, disponibles: { $gt: 0 } }) // Trae todos los productos marcados para venta online y con disponibilidad mayor a 0
-      .select({ _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, subcategoria: 1, images: 1 });
+      .select({ _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, images: 1 });
     debug('------getAllProducts-----\nsuccess\n', products);
     return {
       internalError: false,
@@ -81,7 +81,7 @@ async function getAllProductsPaginated(params){
     const products = await Product
       .find()
       .sort({ nombre: 1 })
-      .select({ _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, subcategoria: 1, images: 1 })
+      .select({ _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, images: 1 })
       .skip((pageNumberInt - 1) * pageSizeInt)
       .limit(pageSizeInt);
     const productCount = await Product.find().count();
@@ -116,7 +116,7 @@ async function searchProducts(data){
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
   const regEx = new RegExp(`.*${searchedValue}.*`, 'iu')
   const sortOrder = sortBy || { nombre: 1 }
-  const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, subcategoria: 1, 'images.cover': 1 }
+  const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, 'images.cover': 1 }
   let products = []; let productCount = 0;
   const newFilters = fixFilters(filters);
 
@@ -168,7 +168,7 @@ async function searchProducts(data){
 async function getOneProduct(id){
 // Trae un producto de la base de datos
   try {
-    const someProduct = await Product.findById(id).select({ _id: 1, descripcion: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, subcategoria: 1, images: 1, marca: 1, nuevo: 1, estetica: 1 });
+    const someProduct = await Product.findById(id).select({ _id: 1, descripcion: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, images: 1, marca: 1, nuevo: 1, estetica: 1 });
     debug('------getOneProduct-----\nsuccess\n', someProduct);
     return {
       internalError: false,
