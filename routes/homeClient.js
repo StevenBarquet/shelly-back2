@@ -11,7 +11,7 @@ const { wrapDBservice, joiCheck } = require('./respondServices');
 const router = express.Router();
 
 // ---------------------------------------------------ROUTES---------------------------------------------
-// ------Read Home index 0 for clients ------
+// ------Read Home index 0 for clients -----
 router.get('/getHome', (req, res) => {
   debug('requested for: ', req.originalUrl)
   wrapDBservice(res, getHomeClient);
