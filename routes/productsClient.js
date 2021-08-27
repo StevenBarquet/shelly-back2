@@ -120,7 +120,7 @@ async function searchProducts(data){
   const sortOrder = sortBy || DEF_SORT_PROD_CLIENT
   const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, 'images.cover': 1 }
   let products = []; let productCount = 0;
-  const newFilters = fixFilters({ ...filters, disponibles: { $gt: 0 } });
+  const newFilters = fixFilters({ ...filters, online: true, disponibles: { $gt: 0 } });
 
   try {
     if (searchedValue){
