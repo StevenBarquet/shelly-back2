@@ -1,7 +1,7 @@
 const SALT_ROUNDS = 5
 exports.SALT_ROUNDS = SALT_ROUNDS
 
-const COOKIE_EXPIRES = '5h'
+const COOKIE_EXPIRES = '7h'
 exports.COOKIE_EXPIRES = COOKIE_EXPIRES
 
 const TOKEN_NAME = 'zkwODY4MH0'
