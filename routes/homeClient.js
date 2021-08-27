@@ -62,9 +62,13 @@ async function getHomeProducts(data){
   // Trae todos los productos de la base de datos
   try {
     const selectedProps = { _id: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, 'images.cover': 1, descuento: 1 }
-    const products = await Product.find({
-      '_id': { $in: ids }
-    }).select(selectedProps)
+    const products = await Product
+      .find({
+        '_id': { $in: ids },
+        disponibles: { $gt: 0 }
+      })
+      .select(selectedProps)
+
     debug('------getAllProducts-----\nsuccess\n', products);
     return {
       internalError: false,

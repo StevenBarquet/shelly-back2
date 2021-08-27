@@ -1,3 +1,4 @@
+/* eslint-disable no-undefined */
 /* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies

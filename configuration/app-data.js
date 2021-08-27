@@ -78,3 +78,6 @@ const CATALOGOS = {
   ]
 }
 exports.CATALOGOS = CATALOGOS
+
+const DEF_SORT_PROD_CLIENT = { countVisits: 1 }
+exports.DEF_SORT_PROD_CLIENT = DEF_SORT_PROD_CLIENT

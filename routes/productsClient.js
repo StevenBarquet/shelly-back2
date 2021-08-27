@@ -1,3 +1,4 @@
+/* eslint-disable no-undefined */
 /* eslint-disable max-lines-per-function */
 // -------------------------------------IMPORTS---------------------------
 // Dependencies
@@ -7,6 +8,7 @@ const debug = require('debug')('app:test')
 const { Product } = require('../data-modell/product');
 const { validatePagination, validateSearch, isId } = require('../data-modell/otherValidators')
 const { wrapDBservice, joiCheck, checkParams } = require('./respondServices');
+const { DEF_SORT_PROD_CLIENT } = require('../configuration/app-data');
 
 const router = express.Router();
 
@@ -115,10 +117,10 @@ async function searchProducts(data){
   // Trae todos los productos que coincidan con los criterios de busqueda
   const { pageNumber, pageSize, searchedValue, filters, sortBy } = data;
   const regEx = new RegExp(`.*${searchedValue}.*`, 'iu')
-  const sortOrder = sortBy || { nombre: 1 }
+  const sortOrder = sortBy || DEF_SORT_PROD_CLIENT
   const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, 'images.cover': 1 }
   let products = []; let productCount = 0;
-  const newFilters = fixFilters(filters);
+  const newFilters = fixFilters({ ...filters, disponibles: { $gt: 0 } });
 
   try {
     if (searchedValue){
