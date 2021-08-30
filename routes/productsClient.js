@@ -170,7 +170,8 @@ async function searchProducts(data){
 async function getOneProduct(id){
 // Trae un producto de la base de datos
   try {
-    const someProduct = await Product.findById(id).select({ _id: 1, descripcion: 1, nombre: 1, precioOnline: 1, disponibles: 1, categoria: 1, images: 1, marca: 1, nuevo: 1, estetica: 1 });
+    const selectValues = { _id: 1, nombre: 1, precioOnline: 1, descuento: 1, disponibles: 1, categoria: 1, descripcion: 1, images: 1, marca: 1, nuevo: 1, estetica: 1, countPurchases: 1 }
+    const someProduct = await Product.findById(id).select(selectValues);
     debug('------getOneProduct-----\nsuccess\n', someProduct);
     return {
       internalError: false,

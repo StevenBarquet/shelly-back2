@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema({
   images: {
     cover: { type: String, required: true },
     mini: String,
-    extra: [ String ]
+    extra: [String]
   },
   costo: { type: Number, required: true },
   precioPlaza: { type: Number, required: true },
@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema({
   nuevo: { type: Boolean, required: true },
   descripcion: String,
   estetica: String,
-  categoria:[{ type: String, required: true }],
+  categoria: [{ type: String, required: true }],
   descuento: { type: Number, required: true },
   countVisits: Number,
   countQuestions: Number,
@@ -32,14 +32,16 @@ const Product = mongoose.model('Product', productSchema)
 
 // ------------------------------------------------MODEL DATA JOI VALIDATORS------------------------------------------
 
-function validateProduct(product) {
+function validateProduct(product){
   const schema = Joi.object({
     marca: Joi.string().optional(),
     nombre: Joi.string().required(),
     images: Joi.object({
-      cover: Joi.string().min(3).required(),
+      cover: Joi.string().min(3)
+        .required(),
       mini: Joi.string().optional(),
-      extra: Joi.array().optional().items(Joi.string().optional())
+      extra: Joi.array().optional()
+        .items(Joi.string().optional())
     }),
     costo: Joi.number().required(),
     precioPlaza: Joi.number().required(),
@@ -50,21 +52,26 @@ function validateProduct(product) {
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
     categoria: Joi.array().items(Joi.string()),
-    descuento: Joi.number().min(0).max(99).required()
+    descuento: Joi.number().min(0)
+      .max(99)
+      .required()
   })
 
   return schema.validate(product)
 }
 
-function validateProductWithId(product) {
+function validateProductWithId(product){
   const schema = Joi.object({
-    _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
+    _id: Joi.string().pattern(/^[0-9a-fA-F]{24}$/)
+      .required(),
     marca: Joi.string().optional(),
     nombre: Joi.string().required(),
     images: Joi.object({
-      cover: Joi.string().min(3).required(),
+      cover: Joi.string().min(3)
+        .required(),
       mini: Joi.string().optional(),
-      extra: Joi.array().optional().items(Joi.string().optional())
+      extra: Joi.array().optional()
+        .items(Joi.string().optional())
     }),
     costo: Joi.number().required(),
     precioPlaza: Joi.number().required(),
@@ -75,7 +82,9 @@ function validateProductWithId(product) {
     descripcion: Joi.string().optional(),
     estetica: Joi.string().optional(),
     categoria: Joi.array().items(Joi.string()),
-    descuento: Joi.number().min(0).max(99).required()
+    descuento: Joi.number().min(0)
+      .max(99)
+      .required()
   })
 
   return schema.validate(product)
