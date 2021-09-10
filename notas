@@ -20,7 +20,7 @@
 -Agregar tamaño volumétrico (para calcular costos de envío por paquetería)
 -Base de datos con tienda config (reglas de envío, métodos de envío, activar, desactivar notificaciones + reglas)
 -Considerar meter las categorías en base de datos de la tienda
-
+-vlv la vida
 
 	Smurfeado:
 -Buscar por id en ordenes
